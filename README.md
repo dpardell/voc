@@ -1,10 +1,10 @@
 <p align="center">
-    <img width="579" height="466" alt="image" src="https://github.com/user-attachments/assets/87e2fa00-1329-4ab0-a311-6c55f203b36f" />
+    <img width="600" height="616" alt="image" src="https://github.com/user-attachments/assets/aa6a82ab-da4d-4d09-aae6-3a6f5a5f8595" />
 </p>
 
 ---
 
-Voca is a CLI language learning & dictionary tool that prioritizes quick access to tailor learning to *your* vocabulary.
+Voc is a CLI language learning & dictionary tool that prioritizes quick access to tailor learning to *your* vocabulary.
 
 ## Features
 
@@ -23,15 +23,15 @@ Requirements: Go 1.25+
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/dpardell/voca.git
-    cd voca
+    git clone https://github.com/dpardell/voc.git
+    cd voc
     ```
 
 2.  **Build and Install**:
     ```bash
     make install
     ```
-    By default, this installs the binary to `~/.local/bin` and prepares the data directory at `~/.local/share/voca`. 
+    By default, this installs the binary to `~/.local/bin` and prepares the data directory at `~/.local/share/voc`. 
 
     **Customizing Paths**:
     You can use the standard `PREFIX` variable to change the installation root:
@@ -40,63 +40,63 @@ Requirements: Go 1.25+
     ```
     Or override specific directories:
     ```bash
-    make install bindir=/opt/voca/bin datadir=/opt/voca/data
+    make install bindir=/opt/voc/bin datadir=/opt/voc/data
     ```
 
 ### Configuration
 
-Voca uses these locations by default (set at build time), but you can override them at runtime using environment variables:
+Voc uses these locations by default (set at build time), but you can override them at runtime using environment variables:
 
-- `VOCA_DB_PATH`: Path to the dictionary database (e.g., `dictionary.db` or `dictionary_fr.db`).
-- `VOCA_USER_DB_PATH`: Path to your personal word collection database (default: `$(datadir)/voca.db`).
-- `VOCA_LANG`: Set the interface and dictionary language (e.g., `fr`). If unset, it attempts to detect from your `LANG` environment variable.
+- `VOC_DB_PATH`: Path to the dictionary database (e.g., `dictionary.db` or `dictionary_fr.db`).
+- `VOC_USER_DB_PATH`: Path to your personal word collection database (default: `$(datadir)/voc.db`).
+- `VOC_LANG`: Set the interface and dictionary language (e.g., `fr`). If unset, it attempts to detect from your `LANG` environment variable.
 
 ## Languages
 
-Voca currently supports the following languages:
+Voc currently supports the following languages:
 
 - **English** (en): Default interface language.
 - **French** (fr): Interface and dictionary support.
 
 To switch to French:
 ```bash
-export VOCA_LANG=fr
-voca search
+export VOC_LANG=fr
+voc search
 ```
 Only French is supported as an alternative language at this time.
 
 ## Usage
 
 ### 1. Initialize Dictionary
-First, fetch the latest dictionary data for your language (defaults to French if `VOCA_LANG=fr`):
+First, fetch the latest dictionary data for your language (defaults to French if `VOC_LANG=fr`):
 ```bash
-VOCA_LANG=fr voca install-dict
+VOC_LANG=fr voc install-dict
 ```
 
 ### 2. Add a Word
 Interactive mode with fuzzy search:
 ```bash
-voca add
+voc add
 ```
 Or directly:
 ```bash
-voca add "bonjour"
+voc add "bonjour"
 ```
 
 ### 3. Review Words
 List all words:
 ```bash
-voca list
+voc list
 ```
 Show specific details:
 ```bash
-voca show "bonjour"
+voc show "bonjour"
 ```
 
 ### 4. Quiz Yourself
 Start a quiz session:
 ```bash
-voca quiz
+voc quiz
 ```
 
 ## Licensing
