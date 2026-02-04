@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"voca/internal/database"
+	"voca/internal/dictionary"
 )
 
 // addWordToDB handles the complete flow of adding a word:
@@ -71,7 +72,6 @@ func addWordToDB(word string, comment string) (bool, error) {
 	return true, nil
 }
 
-// printWordDetails helper to show what was added (used by 'add' command)
 func printWordDetails(word string) {
 	w, err := db.GetWord(word)
 	if err != nil || w == nil {
@@ -87,6 +87,21 @@ func printWordDetails(word string) {
 			for _, d := range t.Definitions {
 				fmt.Printf("    - %s\n", d)
 			}
+		}
+	}
+}
+
+func printDefinition(word string, data *dictionary.DefinitionData) {
+	if data == nil {
+		fmt.Printf("No definition found for '%s'\n", word)
+		return
+	}
+
+	fmt.Printf("Word: %s\n", word)
+	for _, t := range data.Types {
+		fmt.Printf("  %s:\n", t.Type)
+		for _, d := range t.Definitions {
+			fmt.Printf("    - %s\n", d)
 		}
 	}
 }

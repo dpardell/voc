@@ -5,20 +5,64 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/wordwrap"
+)
+
+const (
+	minWindowHeight       = 15
+	availableHeightOffset = 10
+	minAvailableHeight    = 5
+	listWidthRatio        = 0.3
+	minListWidth          = 20
+	layoutPadding         = 4
+	minContentWidth       = 10
+	searchLimit           = 50
+	wrapBuffer            = 2
+	inputWidthOffset      = 10
+	inputCharLimit        = 156
+)
+
+const (
+	noMatchesMsg    = "No matches found..."
+	selectItemMsg   = "Select an item to see details..."
+	errorPreviewMsg = "Error loading preview"
+	resizeWindowMsg = "(Resize window to view results)"
 )
 
 var (
-	focusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
-	blurredStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
-	cursorStyle  = focusedStyle.Copy()
-	noStyle      = lipgloss.NewStyle()
-	helpStyle    = blurredStyle.Copy()
-	matchStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("220")).Bold(true) // Yellow bold for matches
+	subtleColor    = lipgloss.Color("241")
+	highlightColor = lipgloss.Color("212")
+	titleBgColor   = lipgloss.Color("62")
 
-	focusedButton = focusedStyle.Copy().Render
-	blurredButton = fmt.Sprintf
+	titleStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("230")).
+			Background(titleBgColor).
+			Padding(0, 1).
+			MarginLeft(1).
+			Bold(true)
+
+	inputBoxStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(highlightColor).
+			Padding(0, 1).
+			MarginBottom(1)
+
+	itemStyle = lipgloss.NewStyle().
+			PaddingLeft(2)
+
+	selectedItemStyle = lipgloss.NewStyle().
+				PaddingLeft(0).
+				Foreground(highlightColor).
+				Bold(true)
+
+	previewStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(subtleColor).
+			Padding(0, 1).
+			MarginLeft(1)
 )
 
 type SearchFunc func(query string, limit int) ([]string, error)
@@ -26,18 +70,22 @@ type PreviewFunc func(word string) (string, error)
 
 type model struct {
 	textInput   textinput.Model
+	viewport    viewport.Model
 	searchFunc  SearchFunc
 	previewFunc PreviewFunc
 
+	title    string
 	results  []string
 	cursor   int
-	selected string // The final choice
+	selected string
 	quitted  bool
 
-	previewText string
-	width       int
-	height      int
-	err         error
+	previewText           string
+	width                 int
+	height                int
+	listWidth             int
+	previewContainerWidth int
+	availableHeight       int
 }
 
 type searchResultMsg struct {
@@ -50,16 +98,19 @@ type previewResultMsg struct {
 	err  error
 }
 
-func InitialModel(prompt string, search SearchFunc, preview PreviewFunc) model {
-	ti := textinput.New()
-	ti.Placeholder = "Type to search..."
-	ti.Focus()
-	ti.Prompt = prompt
-	ti.CharLimit = 156
-	ti.Width = 20
+func InitialModel(title string, search SearchFunc, preview PreviewFunc) model {
+	textInput := textinput.New()
+	textInput.Placeholder = "Type to search..."
+	textInput.Focus()
+	textInput.Prompt = "> "
+	textInput.CharLimit = inputCharLimit
+
+	viewportModel := viewport.New(0, 0)
 
 	return model{
-		textInput:   ti,
+		title:       title,
+		textInput:   textInput,
+		viewport:    viewportModel,
 		searchFunc:  search,
 		previewFunc: preview,
 		cursor:      0,
@@ -77,6 +128,35 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+
+		inputWidth := m.width - inputWidthOffset
+		if inputWidth < minContentWidth {
+			inputWidth = minContentWidth
+		}
+		m.textInput.Width = inputWidth
+
+		m.availableHeight = m.height - availableHeightOffset
+		if m.availableHeight < minAvailableHeight {
+			m.availableHeight = minAvailableHeight
+		}
+
+		m.listWidth = int(float64(m.width) * listWidthRatio)
+		if m.listWidth < minListWidth {
+			m.listWidth = minListWidth
+		}
+
+		m.previewContainerWidth = m.width - m.listWidth - layoutPadding
+
+		previewContentWidth := m.previewContainerWidth - layoutPadding
+		if previewContentWidth < minContentWidth {
+			previewContentWidth = minContentWidth
+		}
+
+		m.viewport.Width = previewContentWidth
+		m.viewport.Height = m.availableHeight
+
+		m.updateViewportContent()
+
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
@@ -87,54 +167,97 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.selected = m.results[m.cursor]
 				return m, tea.Quit
 			}
-		case tea.KeyUp:
+		case tea.KeyUp, tea.KeyCtrlP:
 			if m.cursor > 0 {
 				m.cursor--
 				return m, m.updatePreview()
 			}
-		case tea.KeyDown:
+		case tea.KeyDown, tea.KeyCtrlN:
 			if m.cursor < len(m.results)-1 {
 				m.cursor++
 				return m, m.updatePreview()
 			}
 		}
-
 	case searchResultMsg:
 		if msg.err != nil {
-			m.err = msg.err
 			return m, nil
 		}
 		m.results = msg.results
-		m.cursor = 0 // Reset cursor on new search
+		m.cursor = 0
+		if len(m.results) == 0 {
+			m.previewText = ""
+			m.updateViewportContent()
+			return m, nil
+		}
 		return m, m.updatePreview()
 
 	case previewResultMsg:
 		if msg.err != nil {
-			m.previewText = "Error loading preview"
-			return m, nil
+			m.previewText = errorPreviewMsg
+		} else {
+			m.previewText = msg.text
 		}
-		m.previewText = msg.text
+		m.updateViewportContent()
+		m.viewport.GotoTop()
+		return m, nil
 	}
 
-	var tiCmd tea.Cmd
-	m.textInput, tiCmd = m.textInput.Update(msg)
+	lastInputValue := m.textInput.Value()
+	var inputCmd tea.Cmd
+	m.textInput, inputCmd = m.textInput.Update(msg)
 
-	// If text changed, trigger search
-	if m.textInput.Value() != "" {
-		cmd = tea.Batch(tiCmd, m.performSearch(m.textInput.Value()))
+	if m.textInput.Value() != lastInputValue {
+		if m.textInput.Value() != "" {
+			cmd = tea.Batch(inputCmd, m.performSearch(m.textInput.Value()))
+		} else {
+			m.results = nil
+			m.previewText = ""
+			m.updateViewportContent()
+			cmd = inputCmd
+		}
 	} else {
-		m.results = nil
-		m.previewText = ""
-		cmd = tiCmd
+		cmd = inputCmd
 	}
+
+	m.viewport, _ = m.viewport.Update(msg)
 
 	return m, cmd
 }
 
+func (m *model) updateViewportContent() {
+	if m.viewport.Width > 0 {
+		wrapWidth := m.viewport.Width - wrapBuffer
+		if wrapWidth < minContentWidth {
+			wrapWidth = minContentWidth
+		}
+
+		lines := strings.Split(m.previewText, "\n")
+		var wrappedLines []string
+
+		for _, line := range lines {
+			if strings.TrimSpace(line) == "" {
+				wrappedLines = append(wrappedLines, "")
+				continue
+			}
+
+			wrappedBlock := wordwrap.String(line, wrapWidth)
+			blockLines := strings.Split(wrappedBlock, "\n")
+
+			wrappedLines = append(wrappedLines, blockLines[0])
+
+			for i := 1; i < len(blockLines); i++ {
+				arrow := lipgloss.NewStyle().Foreground(subtleColor).Render("↳ ")
+				wrappedLines = append(wrappedLines, arrow+blockLines[i])
+			}
+		}
+
+		m.viewport.SetContent(strings.Join(wrappedLines, "\n"))
+	}
+}
+
 func (m model) performSearch(query string) tea.Cmd {
 	return func() tea.Msg {
-		// Use a slight delay to debounce? (Maybe overkill for local DB)
-		results, err := m.searchFunc(query, 50)
+		results, err := m.searchFunc(query, searchLimit)
 		return searchResultMsg{results: results, err: err}
 	}
 }
@@ -155,30 +278,27 @@ func (m model) View() string {
 		return ""
 	}
 
-	s := fmt.Sprintf("\n%s\n\n", m.textInput.View())
+	title := titleStyle.Render(m.title)
+	searchBoxWidth := m.width - layoutPadding
+	searchView := inputBoxStyle.Width(searchBoxWidth).Render(m.textInput.View())
 
-	// Split view: Left results, Right preview
-
-	// Prevent panic if window too small
-	if m.height < 10 {
-		return s + "(Resize window to view results)"
+	if m.height < minWindowHeight {
+		return fmt.Sprintf("\n%s\n%s\n%s", title, searchView, resizeWindowMsg)
 	}
 
-	maxListHeight := m.height - 5 // Account for prompt and footer
-
-	// Create list view
 	var listItems []string
 	start := 0
 	end := len(m.results)
-	if end > maxListHeight {
-		start = m.cursor - (maxListHeight / 2)
+
+	if end > m.availableHeight {
+		start = m.cursor - (m.availableHeight / 2)
 		if start < 0 {
 			start = 0
 		}
-		end = start + maxListHeight
+		end = start + m.availableHeight
 		if end > len(m.results) {
 			end = len(m.results)
-			start = end - maxListHeight
+			start = end - m.availableHeight
 			if start < 0 {
 				start = 0
 			}
@@ -186,43 +306,45 @@ func (m model) View() string {
 	}
 
 	for i := start; i < end; i++ {
-		res := m.results[i]
+		result := m.results[i]
 		if i == m.cursor {
-			listItems = append(listItems, focusedStyle.Render("> "+res))
+			listItems = append(listItems, selectedItemStyle.Render("✨ "+result))
 		} else {
-			listItems = append(listItems, fmt.Sprintf("  %s", res))
+			listItems = append(listItems, itemStyle.Render(result))
 		}
 	}
 
-	listView := strings.Join(listItems, "\n")
+	if len(m.results) == 0 && m.textInput.Value() != "" {
+		listItems = append(listItems, itemStyle.Foreground(subtleColor).Render(noMatchesMsg))
+	}
 
-	// Layout
-	// We want roughly 50% width for list, 50% for preview
-	halfWidth := (m.width / 2) - 2
+	listView := lipgloss.NewStyle().
+		Width(m.listWidth).
+		Render(strings.Join(listItems, "\n"))
 
-	listView = lipgloss.NewStyle().Width(halfWidth).Render(listView)
-	previewView := lipgloss.NewStyle().
-		Width(halfWidth).
-		Border(lipgloss.NormalBorder(), false, false, false, true). // Left border
-		PaddingLeft(1).
-		Foreground(lipgloss.Color("245")).
-		Render(m.previewText)
+	if m.previewText == "" {
+		m.viewport.SetContent(selectItemMsg)
+	}
 
-	// Combine horizontally
+	previewView := previewStyle.
+		Width(m.previewContainerWidth).
+		Height(m.availableHeight).
+		Render(m.viewport.View())
+
 	content := lipgloss.JoinHorizontal(lipgloss.Top, listView, previewView)
 
-	return s + content
+	return fmt.Sprintf("\n%s\n%s\n%s", title, searchView, content)
 }
 
-func RunFuzzyFinder(prompt string, search SearchFunc, preview PreviewFunc) (string, error) {
-	p := tea.NewProgram(InitialModel(prompt, search, preview), tea.WithAltScreen())
-	m, err := p.Run()
+func RunFuzzyFinder(title string, search SearchFunc, preview PreviewFunc) (string, error) {
+	program := tea.NewProgram(InitialModel(title, search, preview), tea.WithAltScreen())
+	finalModel, err := program.Run()
 	if err != nil {
 		return "", err
 	}
 
-	if finalModel, ok := m.(model); ok && !finalModel.quitted {
-		return finalModel.selected, nil
+	if resultModel, ok := finalModel.(model); ok && !resultModel.quitted {
+		return resultModel.selected, nil
 	}
 
 	return "", nil

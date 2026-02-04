@@ -36,7 +36,7 @@ var addCmd = &cobra.Command{
 				return dict.Preview(w)
 			}
 
-			selected, err := ui.RunFuzzyFinder("Add word: ", searchFunc, previewFunc)
+			selected, err := ui.RunFuzzyFinder("ADD WORD", searchFunc, previewFunc)
 			if err != nil {
 				fmt.Printf("Error: %v\n", err)
 				return

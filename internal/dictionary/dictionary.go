@@ -150,18 +150,8 @@ func (d *Dictionary) Preview(word string) (string, error) {
 			if j >= 2 {
 				break
 			}
-			if len(def) > 60 {
-				def = def[:60] + "..."
-			}
 			lines = append(lines, fmt.Sprintf("  %s", def))
 		}
 	}
 	return strings.Join(lines, "\n"), nil
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }

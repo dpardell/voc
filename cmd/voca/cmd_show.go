@@ -74,7 +74,7 @@ var showCmd = &cobra.Command{
 				return strings.Join(lines, "\n"), nil
 			}
 
-			selected, err := ui.RunFuzzyFinder("Show word: ", searchFunc, previewFunc)
+			selected, err := ui.RunFuzzyFinder("SHOW WORD", searchFunc, previewFunc)
 			if err != nil {
 				fmt.Printf("Error: %v\n", err)
 				return
