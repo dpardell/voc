@@ -44,7 +44,7 @@ var importCmd = &cobra.Command{
 					// Try args just in case
 					input = strings.Join(args, ",")
 				} else {
-					fmt.Println("Usage: wordsoup import -f <file> OR pipe input")
+					fmt.Println("Usage: voc import -f <file> OR pipe input")
 					return
 				}
 			}

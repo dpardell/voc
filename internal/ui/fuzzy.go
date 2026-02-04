@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"voca/internal/i18n"
+	"voc/internal/i18n"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"

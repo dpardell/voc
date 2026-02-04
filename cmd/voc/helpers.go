@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"voca/internal/database"
-	"voca/internal/dictionary"
+	"voc/internal/database"
+	"voc/internal/dictionary"
 )
 
 // addWordToDB handles the complete flow of adding a word:

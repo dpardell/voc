@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"strings"
-	"voca/internal/i18n"
-	"voca/internal/ui"
+	"voc/internal/i18n"
+	"voc/internal/ui"
 
 	"github.com/spf13/cobra"
 )

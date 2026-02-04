@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"voca/internal/i18n"
-	"voca/internal/ui"
+	"voc/internal/i18n"
+	"voc/internal/ui"
 
 	"github.com/spf13/cobra"
 )
@@ -18,7 +18,7 @@ var searchCmd = &cobra.Command{
 	Long:  "Search for a word in the dictionary without adding it to your vocabulary list. Supports interactive search if no word is provided.",
 	Run: func(cmd *cobra.Command, args []string) {
 		if dict == nil {
-			fmt.Println("Dictionary not installed. Run 'wordsoup install-dict' first.")
+			fmt.Println("Dictionary not installed. Run 'voc install-dict' first.")
 			return
 		}
 

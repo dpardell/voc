@@ -22,5 +22,5 @@ go.work.sum
 .env
 
 # Project specific
-voca
-!voca/
+voc
+!voc/

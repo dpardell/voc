@@ -38,7 +38,7 @@ var DefaultUserDBPath string
 
 func New() (*Database, error) {
 	var dbPath string
-	if envPath := os.Getenv("VOCA_USER_DB_PATH"); envPath != "" {
+	if envPath := os.Getenv("VOC_USER_DB_PATH"); envPath != "" {
 		dbPath = envPath
 	} else if DefaultUserDBPath != "" {
 		dbPath = DefaultUserDBPath
@@ -47,7 +47,7 @@ func New() (*Database, error) {
 		if err != nil {
 			return nil, err
 		}
-		dbPath = filepath.Join(home, ".local", "share", "voca", "voca.db")
+		dbPath = filepath.Join(home, ".local", "share", "voc", "voc.db")
 	}
 
 	dbDir := filepath.Dir(dbPath)

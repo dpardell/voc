@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"voca/internal/database"
-	"voca/internal/i18n"
-	"voca/internal/ui"
+	"voc/internal/database"
+	"voc/internal/i18n"
+	"voc/internal/ui"
 
 	"github.com/spf13/cobra"
 )

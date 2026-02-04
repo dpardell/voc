@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"voca/internal/i18n"
-	"voca/internal/ui"
+	"voc/internal/i18n"
+	"voc/internal/ui"
 
 	"github.com/spf13/cobra"
 )
@@ -25,7 +25,7 @@ var addCmd = &cobra.Command{
 		} else {
 			// Interactive mode
 			if dict == nil {
-				fmt.Println("Dictionary not installed. Run 'wordsoup install-dict' first.")
+				fmt.Println("Dictionary not installed. Run 'voc install-dict' first.")
 				return
 			}
 

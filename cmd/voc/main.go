@@ -6,15 +6,15 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"voca/internal/database"
-	"voca/internal/dictionary"
-	"voca/internal/i18n"
+	"voc/internal/database"
+	"voc/internal/dictionary"
+	"voc/internal/i18n"
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "voca",
+	Use:   "voc",
 	Short: "A personal command-line dictionary for language learners",
-	Long: `Voca tracks the words you learn, fetches definitions from Wiktionary,
+	Long: `Voc tracks the words you learn, fetches definitions from Wiktionary,
 and helps you review with interactive quizzes.`,
 	CompletionOptions: cobra.CompletionOptions{
 		DisableDefaultCmd: true,
@@ -30,7 +30,7 @@ var (
 
 func init() {
 	// Initialize language
-	lang := os.Getenv("VOCA_LANG")
+	lang := os.Getenv("VOC_LANG")
 	if lang == "" {
 		lang = os.Getenv("LANG")
 	}

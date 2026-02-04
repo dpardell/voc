@@ -1,4 +1,4 @@
-module voca
+module voc
 
 go 1.25.1
 

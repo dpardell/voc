@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"voca/internal/dictionary"
+	"voc/internal/dictionary"
 
 	"github.com/spf13/cobra"
 )

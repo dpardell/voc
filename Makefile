@@ -1,9 +1,9 @@
-BINARY_NAME?=voca
+BINARY_NAME?=voc
 PREFIX?=$(HOME)/.local
 bindir?=$(PREFIX)/bin
-datadir?=$(PREFIX)/share/voca
+datadir?=$(PREFIX)/share/voc
 
-LDFLAGS=-ldflags "-X 'voca/internal/dictionary.DefaultDictionaryPath=$(datadir)/dictionary.db' -X 'voca/internal/database.DefaultUserDBPath=$(datadir)/voca.db'"
+LDFLAGS=-ldflags "-X 'voc/internal/dictionary.DefaultDictionaryPath=$(datadir)/dictionary.db' -X 'voc/internal/database.DefaultUserDBPath=$(datadir)/voc.db'"
 
 .PHONY: all build clean install uninstall
 
@@ -11,7 +11,7 @@ all: build
 
 build:
 	@echo "Building $(BINARY_NAME)..."
-	go build $(LDFLAGS) -tags "fts5" -o $(BINARY_NAME) ./cmd/voca
+	go build $(LDFLAGS) -tags "fts5" -o $(BINARY_NAME) ./cmd/voc
 
 clean:
 	@echo "Cleaning..."
