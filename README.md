@@ -4,16 +4,15 @@
 
 ---
 
-Voca is a personal CLI dictionary tool for language learners. It helps you track new words, automatically fetches definitions from Wiktionary, and provides spaced-repetition style quizzes.
+Voca is a CLI language learning & dictionary tool that prioritizes quick access to tailor learning to *your* vocabulary.
 
 ## Features
 
 - **Add Words**: Quickly add words with automatic definition lookup.
 - **Fuzzy Search**: Interactive, real-time search for your saved collection.
-- **Dictionary**: Integrated with the French Wiktionary (via [kaikki.org](https://kaikki.org)).
+- **Dictionary**: Currently integrated with the French Wiktionary (via [kaikki.org](https://kaikki.org)).
 - **Quiz Mode**: Test your vocabulary with interactive quizzes.
 - **Import/Export**: Manage your data via CSV or plain text.
-- **No Dependencies**: Single binary executable (SQLite embedded).
 
 ## Installation
 
@@ -23,7 +22,7 @@ Requirements: Go 1.21+
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/david/voca.git
+    git clone https://github.com/dpardell/voca.git
     cd voca
     ```
 
@@ -48,7 +47,7 @@ voca add
 ```
 Or directly:
 ```bash
-voca add "bonjour" -c "Hello in French"
+voca add "bonjour"
 ```
 
 ### 3. Review Words
