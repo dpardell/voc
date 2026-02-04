@@ -24,14 +24,19 @@ type TypeData struct {
 }
 
 func New() (*Dictionary, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return nil, err
+	var dbPath string
+	if envPath := os.Getenv("VOCA_DB_PATH"); envPath != "" {
+		dbPath = envPath
+	} else {
+		configDir, err := os.UserConfigDir()
+		if err != nil {
+			return nil, err
+		}
+		dbPath = filepath.Join(configDir, "voca", "dictionary.db")
 	}
-	dbPath := filepath.Join(home, ".local", "share", "voca", "dictionary.db")
 
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("dictionary not found")
+		return nil, fmt.Errorf("dictionary not found at %s", dbPath)
 	}
 
 	db, err := sql.Open("sqlite3", dbPath)
