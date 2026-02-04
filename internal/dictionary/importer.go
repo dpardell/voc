@@ -25,8 +25,8 @@ type Importer struct {
 	CacheFile string
 }
 
-func NewImporter() (*Importer, error) {
-	dbPath, err := GetDictionaryPath()
+func NewImporter(lang string) (*Importer, error) {
+	dbPath, err := GetDictionaryPath(lang)
 	if err != nil {
 		return nil, err
 	}

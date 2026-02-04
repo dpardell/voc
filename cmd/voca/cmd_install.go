@@ -17,7 +17,7 @@ var installDictCmd = &cobra.Command{
 	Short: "Download and install the French dictionary",
 	Run: func(cmd *cobra.Command, args []string) {
 		force, _ := cmd.Flags().GetBool("force")
-		importer, err := dictionary.NewImporter()
+		importer, err := dictionary.NewImporter(detectedLang)
 		if err != nil {
 			fmt.Printf("Error: %v\n", err)
 			return

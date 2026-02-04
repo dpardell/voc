@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"voca/internal/database"
+	"voca/internal/i18n"
 	"voca/internal/ui"
 
 	"github.com/spf13/cobra"
@@ -47,7 +48,7 @@ var fixCmd = &cobra.Command{
 
 		for i, w := range wordsToFix {
 			fmt.Printf("[%d/%d] Fixing '%s'...\n", i+1, len(wordsToFix), w)
-			selected, err := ui.RunFuzzyFinder(fmt.Sprintf("FIXING WORD: %s", w), searchFunc, previewFunc)
+			selected, err := ui.RunFuzzyFinder(i18n.T(i18n.FixingWord, w), searchFunc, previewFunc)
 			if err != nil {
 				fmt.Printf("Error: %v\n", err)
 				continue

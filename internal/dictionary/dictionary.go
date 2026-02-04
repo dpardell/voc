@@ -25,7 +25,7 @@ type TypeData struct {
 
 var DefaultDictionaryPath string
 
-func GetDictionaryPath() (string, error) {
+func GetDictionaryPath(lang string) (string, error) {
 	if envPath := os.Getenv("VOCA_DB_PATH"); envPath != "" {
 		return envPath, nil
 	}
@@ -36,11 +36,17 @@ func GetDictionaryPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(configDir, "voca", "dictionary.db"), nil
+
+	dbName := "dictionary.db"
+	if lang != "" && lang != "en" {
+		dbName = fmt.Sprintf("dictionary_%s.db", lang)
+	}
+
+	return filepath.Join(configDir, "voca", dbName), nil
 }
 
-func New() (*Dictionary, error) {
-	dbPath, err := GetDictionaryPath()
+func New(lang string) (*Dictionary, error) {
+	dbPath, err := GetDictionaryPath(lang)
 	if err != nil {
 		return nil, err
 	}

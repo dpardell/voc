@@ -8,6 +8,7 @@ import (
 
 	"voca/internal/database"
 	"voca/internal/dictionary"
+	"voca/internal/i18n"
 )
 
 var rootCmd = &cobra.Command{
@@ -22,11 +23,22 @@ and helps you review with interactive quizzes.`,
 
 // Global instances
 var (
-	db   *database.Database
-	dict *dictionary.Dictionary
+	db           *database.Database
+	dict         *dictionary.Dictionary
+	detectedLang string
 )
 
 func init() {
+	// Initialize language
+	lang := os.Getenv("VOCA_LANG")
+	if lang == "" {
+		lang = os.Getenv("LANG")
+	}
+	if len(lang) >= 2 {
+		detectedLang = lang[:2]
+		i18n.SetLanguage(detectedLang)
+	}
+
 	var err error
 	db, err = database.New()
 	if err != nil {
@@ -35,7 +47,7 @@ func init() {
 	}
 
 	// Dictionary is optional for some commands, but usually needed
-	dict, _ = dictionary.New()
+	dict, _ = dictionary.New(detectedLang)
 }
 
 func Execute() {

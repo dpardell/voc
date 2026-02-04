@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"voca/internal/i18n"
 	"voca/internal/ui"
 
 	"github.com/spf13/cobra"
@@ -36,7 +37,7 @@ var addCmd = &cobra.Command{
 				return dict.Preview(w)
 			}
 
-			selected, err := ui.RunFuzzyFinder("ADD WORD", searchFunc, previewFunc)
+			selected, err := ui.RunFuzzyFinder(i18n.T(i18n.AddingWord), searchFunc, previewFunc)
 			if err != nil {
 				fmt.Printf("Error: %v\n", err)
 				return

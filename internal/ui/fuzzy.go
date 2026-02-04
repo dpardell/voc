@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"voca/internal/i18n"
+
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -26,10 +28,10 @@ const (
 )
 
 const (
-	noMatchesMsg    = "No matches found..."
-	selectItemMsg   = "Select an item to see details..."
-	errorPreviewMsg = "Error loading preview"
-	resizeWindowMsg = "(Resize window to view results)"
+	noMatchesMsg    = i18n.NoMatches
+	selectItemMsg   = i18n.SelectItem
+	errorPreviewMsg = i18n.ErrorPreview
+	resizeWindowMsg = i18n.ResizeWindow
 )
 
 var (
@@ -100,7 +102,7 @@ type previewResultMsg struct {
 
 func InitialModel(title string, search SearchFunc, preview PreviewFunc) model {
 	textInput := textinput.New()
-	textInput.Placeholder = "Type to search..."
+	textInput.Placeholder = i18n.T(i18n.TypeToSearch)
 	textInput.Focus()
 	textInput.Prompt = "> "
 	textInput.CharLimit = inputCharLimit
@@ -193,7 +195,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case previewResultMsg:
 		if msg.err != nil {
-			m.previewText = errorPreviewMsg
+			m.previewText = i18n.T(errorPreviewMsg)
 		} else {
 			m.previewText = msg.text
 		}
@@ -283,7 +285,7 @@ func (m model) View() string {
 	searchView := inputBoxStyle.Width(searchBoxWidth).Render(m.textInput.View())
 
 	if m.height < minWindowHeight {
-		return fmt.Sprintf("\n%s\n%s\n%s", title, searchView, resizeWindowMsg)
+		return fmt.Sprintf("\n%s\n%s\n%s", title, searchView, i18n.T(resizeWindowMsg))
 	}
 
 	var listItems []string
@@ -315,7 +317,7 @@ func (m model) View() string {
 	}
 
 	if len(m.results) == 0 && m.textInput.Value() != "" {
-		listItems = append(listItems, itemStyle.Foreground(subtleColor).Render(noMatchesMsg))
+		listItems = append(listItems, itemStyle.Foreground(subtleColor).Render(i18n.T(noMatchesMsg)))
 	}
 
 	listView := lipgloss.NewStyle().
@@ -323,7 +325,7 @@ func (m model) View() string {
 		Render(strings.Join(listItems, "\n"))
 
 	if m.previewText == "" {
-		m.viewport.SetContent(selectItemMsg)
+		m.viewport.SetContent(i18n.T(selectItemMsg))
 	}
 
 	previewView := previewStyle.
