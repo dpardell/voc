@@ -1,4 +1,8 @@
-# Voca
+<p align="center">
+    <img width="579" height="466" alt="image" src="https://github.com/user-attachments/assets/87e2fa00-1329-4ab0-a311-6c55f203b36f" />
+</p>
+
+---
 
 Voca is a personal CLI dictionary tool for language learners. It helps you track new words, automatically fetches definitions from Wiktionary, and provides spaced-repetition style quizzes.
 
