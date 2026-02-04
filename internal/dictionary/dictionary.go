@@ -23,16 +23,26 @@ type TypeData struct {
 	Definitions []string
 }
 
-func New() (*Dictionary, error) {
-	var dbPath string
+var DefaultDictionaryPath string
+
+func GetDictionaryPath() (string, error) {
 	if envPath := os.Getenv("VOCA_DB_PATH"); envPath != "" {
-		dbPath = envPath
-	} else {
-		configDir, err := os.UserConfigDir()
-		if err != nil {
-			return nil, err
-		}
-		dbPath = filepath.Join(configDir, "voca", "dictionary.db")
+		return envPath, nil
+	}
+	if DefaultDictionaryPath != "" {
+		return DefaultDictionaryPath, nil
+	}
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(configDir, "voca", "dictionary.db"), nil
+}
+
+func New() (*Dictionary, error) {
+	dbPath, err := GetDictionaryPath()
+	if err != nil {
+		return nil, err
 	}
 
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {

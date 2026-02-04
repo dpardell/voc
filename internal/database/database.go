@@ -34,18 +34,26 @@ type Comment struct {
 	CreatedAt string
 }
 
+var DefaultUserDBPath string
+
 func New() (*Database, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return nil, err
+	var dbPath string
+	if envPath := os.Getenv("VOCA_USER_DB_PATH"); envPath != "" {
+		dbPath = envPath
+	} else if DefaultUserDBPath != "" {
+		dbPath = DefaultUserDBPath
+	} else {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return nil, err
+		}
+		dbPath = filepath.Join(home, ".local", "share", "voca", "voca.db")
 	}
 
-	dbDir := filepath.Join(home, ".local", "share", "voca")
+	dbDir := filepath.Dir(dbPath)
 	if err := os.MkdirAll(dbDir, 0755); err != nil {
 		return nil, err
 	}
-
-	dbPath := filepath.Join(dbDir, "voca.db")
 
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {

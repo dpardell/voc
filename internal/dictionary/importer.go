@@ -26,18 +26,19 @@ type Importer struct {
 }
 
 func NewImporter() (*Importer, error) {
-	home, err := os.UserHomeDir()
+	dbPath, err := GetDictionaryPath()
 	if err != nil {
 		return nil, err
 	}
-	dictDir := filepath.Join(home, ".local", "share", "voca")
+
+	dictDir := filepath.Dir(dbPath)
 	if err := os.MkdirAll(dictDir, 0755); err != nil {
 		return nil, err
 	}
 
 	return &Importer{
 		DictDir:   dictDir,
-		DictDB:    filepath.Join(dictDir, "dictionary.db"),
+		DictDB:    dbPath,
 		CacheFile: filepath.Join(dictDir, "kaikki-francais.jsonl"),
 	}, nil
 }

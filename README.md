@@ -18,7 +18,7 @@ Voca is a CLI language learning & dictionary tool that prioritizes quick access 
 
 ### From Source
 
-Requirements: Go 1.21+
+Requirements: Go 1.25+
 
 1.  **Clone the repository**:
     ```bash
@@ -30,7 +30,24 @@ Requirements: Go 1.21+
     ```bash
     make install
     ```
-    This will install the `voca` binary to `~/.local/bin`. Ensure this directory is in your `$PATH`.
+    By default, this installs the binary to `~/.local/bin` and prepares the data directory at `~/.local/share/voca`. 
+
+    **Customizing Paths**:
+    You can use the standard `PREFIX` variable to change the installation root:
+    ```bash
+    make install PREFIX=/usr/local
+    ```
+    Or override specific directories:
+    ```bash
+    make install bindir=/opt/voca/bin datadir=/opt/voca/data
+    ```
+
+### Configuration
+
+Voca uses these locations by default (set at build time), but you can override them at runtime using environment variables:
+
+- `VOCA_DB_PATH`: Path to the dictionary database (default: `$(datadir)/dictionary.db`).
+- `VOCA_USER_DB_PATH`: Path to your personal word collection database (default: `$(datadir)/voca.db`).
 
 ## Usage
 
