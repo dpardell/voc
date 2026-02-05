@@ -39,12 +39,12 @@ const (
 )
 
 var (
-	subtleColor    = lipgloss.Color("241")
-	highlightColor = lipgloss.Color("212")
-	titleBgColor   = lipgloss.Color("62")
+	subtleColor    = lipgloss.Color("241") // Grey
+	highlightColor = lipgloss.Color("118") // Light Green
+	titleBgColor   = lipgloss.Color("26")  // Ocean Blue
 
 	titleStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("230")).
+			Foreground(lipgloss.Color("255")). // White
 			Background(titleBgColor).
 			Padding(0, 1).
 			MarginLeft(1).
@@ -52,7 +52,7 @@ var (
 
 	inputBoxStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(highlightColor).
+			BorderForeground(titleBgColor).
 			Padding(0, 1).
 			MarginBottom(1)
 
@@ -79,7 +79,7 @@ var (
 			MarginTop(1)
 
 	savedStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("220")).
+			Foreground(highlightColor).
 			Bold(true).
 			MarginLeft(2)
 )
