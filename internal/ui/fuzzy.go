@@ -2,10 +2,13 @@ package ui
 
 import (
 	"fmt"
+	"math/rand/v2"
 	"strings"
+	"time"
 
 	"voc/internal/i18n"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -39,50 +42,71 @@ const (
 )
 
 var (
-	subtleColor    = lipgloss.Color("241") // Grey
-	highlightColor = lipgloss.Color("118") // Light Green
-	titleBgColor   = lipgloss.Color("26")  // Ocean Blue
+	subtleColor    lipgloss.Color
+	highlightColor lipgloss.Color
+	titleBgColor   lipgloss.Color
+
+	titleStyle        lipgloss.Style
+	inputBoxStyle     lipgloss.Style
+	itemStyle         lipgloss.Style
+	selectedItemStyle lipgloss.Style
+	previewStyle      lipgloss.Style
+	subtleStyle       lipgloss.Style
+	hintStyle         lipgloss.Style
+	savedStyle        lipgloss.Style
+)
+
+func initStyles(isNight bool) {
+	subtleColor = lipgloss.Color("241") // Grey
+
+	if isNight {
+		highlightColor = lipgloss.Color("229") // Yellow
+		titleBgColor = lipgloss.Color("244")   // Gray
+	} else {
+		highlightColor = lipgloss.Color("2") // Green
+		titleBgColor = lipgloss.Color("4")   // Blue
+	}
 
 	titleStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("255")). // White
-			Background(titleBgColor).
-			Padding(0, 1).
-			MarginLeft(1).
-			Bold(true)
+		Foreground(lipgloss.Color("255")). // White
+		Background(titleBgColor).
+		Padding(0, 1).
+		MarginLeft(1).
+		Bold(true)
 
 	inputBoxStyle = lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(titleBgColor).
-			Padding(0, 1).
-			MarginBottom(1)
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(titleBgColor).
+		Padding(0, 1).
+		MarginBottom(1)
 
 	itemStyle = lipgloss.NewStyle().
-			PaddingLeft(2)
+		PaddingLeft(2)
 
 	selectedItemStyle = lipgloss.NewStyle().
-				PaddingLeft(0).
-				Foreground(highlightColor).
-				Bold(true)
+		PaddingLeft(0).
+		Foreground(highlightColor).
+		Bold(true)
 
 	previewStyle = lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(subtleColor).
-			Padding(0, 1).
-			MarginLeft(1)
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(subtleColor).
+		Padding(0, 1).
+		MarginLeft(1)
 
 	subtleStyle = lipgloss.NewStyle().
-			Foreground(subtleColor).
-			MarginLeft(2)
+		Foreground(subtleColor).
+		MarginLeft(2)
 
 	hintStyle = lipgloss.NewStyle().
-			Foreground(subtleColor).
-			MarginTop(1)
+		Foreground(subtleColor).
+		MarginTop(1)
 
 	savedStyle = lipgloss.NewStyle().
-			Foreground(highlightColor).
-			Bold(true).
-			MarginLeft(2)
-)
+		Foreground(highlightColor).
+		Bold(true).
+		MarginLeft(2)
+}
 
 type SearchFunc func(query string, limit int) ([]string, error)
 type DefFunc func(word string) (string, error)
@@ -103,6 +127,7 @@ type model struct {
 	defFunc         DefFunc
 	checkVocabFunc  CheckVocabFunc
 	toggleVocabFunc ToggleVocabFunc
+	earthSpinner    spinner.Model
 
 	state         uiState
 	title         string
@@ -142,10 +167,34 @@ type vocabToggleMsg struct {
 }
 
 func InitialModel(title string, search SearchFunc, def DefFunc, check CheckVocabFunc, toggle ToggleVocabFunc) model {
+	hour := time.Now().Hour()
+	isNight := hour >= 21 || hour < 7
+
+	initStyles(isNight)
+
+	s := spinner.New()
+	if isNight {
+		s.Spinner = spinner.Spinner{
+			Frames: []string{"🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"},
+			FPS:    time.Second / 8,
+		}
+	} else {
+		if rand.Float64() < 0.1 { // 10% chance of Sun spinner during the day
+			s.Spinner = spinner.Spinner{
+				Frames: []string{"☀️", "🌤️", "⛅️", "🌥️", "☁️", "🌥️", "⛅️", "🌤️", "☀️"},
+				FPS:    time.Second / 4,
+			}
+		} else {
+			s.Spinner = spinner.Spinner{
+				Frames: []string{"🌍", "🌎", "🌏"},
+				FPS:    time.Second / 4,
+			}
+		}
+	}
+
 	textInput := textinput.New()
 	textInput.Placeholder = i18n.T(i18n.TypeToSearch)
 	textInput.Focus()
-	textInput.Prompt = "> "
 	textInput.CharLimit = inputCharLimit
 
 	viewportModel := viewport.New(0, 0)
@@ -159,13 +208,14 @@ func InitialModel(title string, search SearchFunc, def DefFunc, check CheckVocab
 		defFunc:         def,
 		checkVocabFunc:  check,
 		toggleVocabFunc: toggle,
+		earthSpinner:    s,
 		cursor:          0,
 		state:           stateSearching,
 	}
 }
 
 func (m model) Init() tea.Cmd {
-	return textinput.Blink
+	return tea.Batch(textinput.Blink, m.earthSpinner.Tick)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -295,6 +345,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.inVocab = msg.inVocab
 		}
 		return m, nil
+
+	case spinner.TickMsg:
+		var cmd tea.Cmd
+		m.earthSpinner, cmd = m.earthSpinner.Update(msg)
+		return m, cmd
 	}
 
 	lastInputValue := m.textInput.Value()
@@ -389,6 +444,10 @@ func (m model) View() string {
 	}
 
 	title := titleStyle.Render(m.title)
+
+	prompt := m.earthSpinner.View() + " "
+	m.textInput.Prompt = prompt
+
 	searchBoxWidth := m.width - layoutPadding
 	searchView := inputBoxStyle.Width(searchBoxWidth).Render(m.textInput.View())
 
