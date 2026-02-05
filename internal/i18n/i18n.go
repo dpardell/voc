@@ -24,6 +24,10 @@ const (
 	PromptDownloadDefault  StringID = "PromptDownloadDefault"
 	PromptCustomURL        StringID = "PromptCustomURL"
 	InstallCancelled       StringID = "InstallCancelled"
+	HintsSearch            StringID = "HintsSearch"
+	HintsDefinition        StringID = "HintsDefinition"
+	Saved                  StringID = "Saved"
+	NotSaved               StringID = "NotSaved"
 )
 
 var en = map[StringID]string{
@@ -43,6 +47,10 @@ var en = map[StringID]string{
 	PromptDownloadDefault:  "Download dictionary from %s? [Y/n/c (custom)] ",
 	PromptCustomURL:        "Enter custom dictionary URL: ",
 	InstallCancelled:       "Installation cancelled.",
+	HintsSearch:            "Ctrl-C: Quit • Ctrl-P: Up • Enter: Select",
+	HintsDefinition:        "Esc: Back • J/K: Scroll • Ctrl-P/N: Prev/Next • Ctrl-S: Toggle Vocab",
+	Saved:                  "SAVED ❤️",
+	NotSaved:               "NOT SAVED",
 }
 
 var fr = map[StringID]string{
@@ -62,6 +70,10 @@ var fr = map[StringID]string{
 	PromptDownloadDefault:  "Télécharger le dictionnaire depuis %s ? [Y/n/c (personnalisé)] ",
 	PromptCustomURL:        "Entrez l'URL personnalisée du dictionnaire : ",
 	InstallCancelled:       "Installation annulée.",
+	HintsSearch:            "Ctrl-C: Quitter • Ctrl-P: Haut • Entrée: Sélectionner",
+	HintsDefinition:        "Esc: Retour • J/K: Défiler • Ctrl-P/N: Préc/Suiv • Ctrl-S: Vocabulaire",
+	Saved:                  "ENREGISTRÉ ❤️",
+	NotSaved:               "NON ENREGISTRÉ",
 }
 
 var activeLocale = "en"

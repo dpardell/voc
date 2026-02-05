@@ -8,8 +8,8 @@ Voc is a CLI language learning & dictionary tool that prioritizes quick access t
 
 ## Features
 
-- **Add Words**: Quickly add words with automatic definition lookup.
-- **Fuzzy Search**: Interactive, real-time search for your saved collection.
+- **Search & Save**: Interactive, real-time search.
+- **Personal Vocabulary**: Save words to your personal vocabulary with a single key press.
 - **Multi-language UI**: Support for different languages in the interface (currently English and French).
 - **Language-specific Dictionaries**: Load different dictionary databases based on your target language.
 - **Quiz Mode**: Test your vocabulary with interactive quizzes.
@@ -73,24 +73,26 @@ First, fetch the latest dictionary data for your language (defaults to French if
 VOC_LANG=fr voc install-dict
 ```
 
-### 2. Add a Word
-Interactive mode with fuzzy search:
+### 2. Search & Save
+Interactive mode with fuzzy search to find definitions and manage your vocabulary:
 ```bash
-voc add
-```
-Or directly:
-```bash
-voc add "bonjour"
+voc search
 ```
 
+**Keybindings**:
+Search results:
+- `Ctrl+P` / `Ctrl+N`: Navigate search results
+- `Enter`: View definition
+
+Definition view:
+- `J` / `K`: Scroll definition
+- `Ctrl+S`: Toggle word in your vocabulary (Save/Remove)
+- `Esc`: Back / Exit
+
 ### 3. Review Words
-List all words:
+List all saved words:
 ```bash
 voc list
-```
-Show specific details:
-```bash
-voc show "bonjour"
 ```
 
 ### 4. Quiz Yourself

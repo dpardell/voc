@@ -32,6 +32,10 @@ const (
 	selectItemMsg   = i18n.SelectItem
 	errorPreviewMsg = i18n.ErrorPreview
 	resizeWindowMsg = i18n.ResizeWindow
+	hintsSearchMsg  = i18n.HintsSearch
+	hintsDefMsg     = i18n.HintsDefinition
+	savedMsg        = i18n.Saved
+	notSavedMsg     = i18n.NotSaved
 )
 
 var (
@@ -69,11 +73,21 @@ var (
 	subtleStyle = lipgloss.NewStyle().
 			Foreground(subtleColor).
 			MarginLeft(2)
+
+	hintStyle = lipgloss.NewStyle().
+			Foreground(subtleColor).
+			MarginTop(1)
+
+	savedStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("220")).
+			Bold(true).
+			MarginLeft(2)
 )
 
 type SearchFunc func(query string, limit int) ([]string, error)
 type DefFunc func(word string) (string, error)
-type AddFunc func(word string) error
+type CheckVocabFunc func(word string) (bool, error)
+type ToggleVocabFunc func(word string) (bool, error)
 
 type uiState int
 
@@ -83,11 +97,12 @@ const (
 )
 
 type model struct {
-	textInput  textinput.Model
-	viewport   viewport.Model
-	searchFunc SearchFunc
-	defFunc    DefFunc
-	addFunc    AddFunc
+	textInput       textinput.Model
+	viewport        viewport.Model
+	searchFunc      SearchFunc
+	defFunc         DefFunc
+	checkVocabFunc  CheckVocabFunc
+	toggleVocabFunc ToggleVocabFunc
 
 	state         uiState
 	title         string
@@ -96,6 +111,7 @@ type model struct {
 	cursor        int
 	selected      string
 	quitted       bool
+	inVocab       bool
 
 	previewText           string
 	width                 int
@@ -115,7 +131,17 @@ type previewResultMsg struct {
 	err  error
 }
 
-func InitialModel(title string, search SearchFunc, def DefFunc) model {
+type vocabCheckMsg struct {
+	inVocab bool
+	err     error
+}
+
+type vocabToggleMsg struct {
+	inVocab bool
+	err     error
+}
+
+func InitialModel(title string, search SearchFunc, def DefFunc, check CheckVocabFunc, toggle ToggleVocabFunc) model {
 	textInput := textinput.New()
 	textInput.Placeholder = i18n.T(i18n.TypeToSearch)
 	textInput.Focus()
@@ -125,14 +151,16 @@ func InitialModel(title string, search SearchFunc, def DefFunc) model {
 	viewportModel := viewport.New(0, 0)
 
 	return model{
-		title:         title,
-		originalTitle: title,
-		textInput:     textInput,
-		viewport:      viewportModel,
-		searchFunc:    search,
-		defFunc:       def,
-		cursor:        0,
-		state:         stateSearching,
+		title:           title,
+		originalTitle:   title,
+		textInput:       textInput,
+		viewport:        viewportModel,
+		searchFunc:      search,
+		defFunc:         def,
+		checkVocabFunc:  check,
+		toggleVocabFunc: toggle,
+		cursor:          0,
+		state:           stateSearching,
 	}
 }
 
@@ -178,16 +206,34 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		if m.state == stateViewingDefinition {
-			switch msg.Type {
-			case tea.KeyEsc, tea.KeyBackspace:
+			switch msg.String() {
+			case "esc", "backspace":
 				m.state = stateSearching
 				m.title = m.originalTitle
 				m.viewport.Height = m.availableHeight
 				m.updateViewportContent()
 				return m, m.updatePreview()
-			case tea.KeyCtrlC:
+			case "ctrl+c":
 				m.quitted = true
 				return m, tea.Quit
+			case "j", "down":
+				m.viewport.ScrollDown(1)
+			case "k", "up":
+				m.viewport.ScrollUp(1)
+			case "ctrl+n":
+				if m.cursor < len(m.results)-1 {
+					m.cursor++
+					m.title = strings.ToUpper(m.results[m.cursor])
+					return m, tea.Batch(m.updateFullDefinition(), m.checkVocab())
+				}
+			case "ctrl+p":
+				if m.cursor > 0 {
+					m.cursor--
+					m.title = strings.ToUpper(m.results[m.cursor])
+					return m, tea.Batch(m.updateFullDefinition(), m.checkVocab())
+				}
+			case "ctrl+s":
+				return m, m.toggleVocab()
 			}
 			m.viewport, cmd = m.viewport.Update(msg)
 			return m, cmd
@@ -202,7 +248,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.state = stateViewingDefinition
 				m.title = strings.ToUpper(m.results[m.cursor])
 				m.viewport.Height = m.height - availableHeightOffset + 2 // Give more room in full view
-				return m, m.updateFullDefinition()
+				return m, tea.Batch(m.updateFullDefinition(), m.checkVocab())
 			}
 		case tea.KeyUp, tea.KeyCtrlP:
 			if m.cursor > 0 {
@@ -236,6 +282,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.updateViewportContent()
 		m.viewport.GotoTop()
+		m.updateViewportContent()
+		m.viewport.GotoTop()
+		return m, nil
+
+	case vocabCheckMsg:
+		m.inVocab = msg.inVocab
+		return m, nil
+
+	case vocabToggleMsg:
+		if msg.err == nil {
+			m.inVocab = msg.inVocab
+		}
 		return m, nil
 	}
 
@@ -303,6 +361,28 @@ func (m model) updateFullDefinition() tea.Cmd {
 	}
 }
 
+func (m model) checkVocab() tea.Cmd {
+	if m.checkVocabFunc == nil || len(m.results) == 0 {
+		return nil
+	}
+	word := m.results[m.cursor]
+	return func() tea.Msg {
+		inVocab, err := m.checkVocabFunc(word)
+		return vocabCheckMsg{inVocab: inVocab, err: err}
+	}
+}
+
+func (m model) toggleVocab() tea.Cmd {
+	if m.toggleVocabFunc == nil || len(m.results) == 0 {
+		return nil
+	}
+	word := m.results[m.cursor]
+	return func() tea.Msg {
+		inVocab, err := m.toggleVocabFunc(word)
+		return vocabToggleMsg{inVocab: inVocab, err: err}
+	}
+}
+
 func (m model) View() string {
 	if m.quitted {
 		return ""
@@ -320,7 +400,13 @@ func (m model) View() string {
 			Height(m.height - availableHeightOffset + 2).
 			Render(m.viewport.View())
 
-		backMsg := subtleStyle.Render("Press Esc or Backspace to go back")
+		if m.inVocab {
+			title = lipgloss.JoinHorizontal(lipgloss.Left, title, savedStyle.Render(i18n.T(savedMsg)))
+		} else {
+			title = lipgloss.JoinHorizontal(lipgloss.Left, title, subtleStyle.Render(i18n.T(notSavedMsg)))
+		}
+
+		backMsg := hintStyle.Render(i18n.T(hintsDefMsg))
 		return fmt.Sprintf("\n%s\n%s\n%s", title, defView, backMsg)
 	}
 
@@ -375,11 +461,13 @@ func (m model) View() string {
 
 	content := lipgloss.JoinHorizontal(lipgloss.Top, listView, previewView)
 
-	return fmt.Sprintf("\n%s\n%s\n%s", title, searchView, content)
+	hints := hintStyle.Render(i18n.T(hintsSearchMsg))
+
+	return fmt.Sprintf("\n%s\n%s\n%s\n%s", title, searchView, content, hints)
 }
 
-func RunFuzzyFinder(title string, search SearchFunc, def DefFunc) (string, error) {
-	program := tea.NewProgram(InitialModel(title, search, def), tea.WithAltScreen())
+func RunFuzzyFinder(title string, search SearchFunc, def DefFunc, check CheckVocabFunc, toggle ToggleVocabFunc) (string, error) {
+	program := tea.NewProgram(InitialModel(title, search, def, check, toggle), tea.WithAltScreen())
 	finalModel, err := program.Run()
 	if err != nil {
 		return "", err
