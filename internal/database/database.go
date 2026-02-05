@@ -27,8 +27,6 @@ type WordType struct {
 	Definitions []string
 }
 
-
-
 var DefaultUserDBPath string
 
 func New() (*Database, error) {
@@ -86,7 +84,6 @@ func createTables(db *sql.DB) error {
 			FOREIGN KEY(word_id) REFERENCES words(id),
 			FOREIGN KEY(word_type_id) REFERENCES word_types(id)
 		)`,
-
 	}
 
 	for _, query := range queries {
@@ -203,7 +200,6 @@ func (d *Database) GetAllWords() ([]Word, error) {
 			return nil, err
 		}
 
-		// Simplified: just get types for listing
 		typeRows, err := d.db.Query("SELECT type FROM word_types WHERE word_id = ?", w.ID)
 		if err != nil {
 			return nil, err
@@ -224,18 +220,6 @@ func (d *Database) GetAllWords() ([]Word, error) {
 	return words, nil
 }
 
-
-
-
-
-
-
-func (d *Database) GetWordID(word string) (int, error) {
-	var id int
-	err := d.db.QueryRow("SELECT id FROM words WHERE word = ?", word).Scan(&id)
-	return id, err
-}
-
 func (d *Database) DeleteWord(word string) error {
 	var wordID int
 	err := d.db.QueryRow("SELECT id FROM words WHERE word = ?", word).Scan(&wordID)
@@ -248,7 +232,6 @@ func (d *Database) DeleteWord(word string) error {
 		return err
 	}
 	defer tx.Rollback()
-
 
 	_, err = tx.Exec("DELETE FROM definitions WHERE word_id = ?", wordID)
 	if err != nil {
@@ -279,75 +262,5 @@ func (d *Database) DeleteAllWords() error {
 			return err
 		}
 	}
-	return tx.Commit()
-}
-
-func (d *Database) GetNotFoundWords() ([]string, error) {
-	rows, err := d.db.Query("SELECT word FROM words WHERE incomplete = 1")
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var words []string
-	for rows.Next() {
-		var w string
-		if err := rows.Scan(&w); err != nil {
-			return nil, err
-		}
-		words = append(words, w)
-	}
-	return words, nil
-}
-
-func (d *Database) UpdateWordSpelling(oldWord, newWord string, types []WordType) error {
-	var wordID int
-	err := d.db.QueryRow("SELECT id FROM words WHERE word = ?", oldWord).Scan(&wordID)
-	if err != nil {
-		return err
-	}
-
-	tx, err := d.db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	// Update word itself
-	_, err = tx.Exec("UPDATE words SET word = ?, incomplete = 0 WHERE id = ?", newWord, wordID)
-	if err != nil {
-		return err
-	}
-
-	// Helper to delete and re-insert definitions
-	_, err = tx.Exec("DELETE FROM definitions WHERE word_id = ?", wordID)
-	if err != nil {
-		return err
-	}
-	_, err = tx.Exec("DELETE FROM word_types WHERE word_id = ?", wordID)
-	if err != nil {
-		return err
-	}
-
-	// Re-insert definitions (shared logic with AddWord, but using existing wordID)
-	for _, t := range types {
-		res, err := tx.Exec("INSERT INTO word_types (word_id, type) VALUES (?, ?)", wordID, t.Type)
-		if err != nil {
-			return err
-		}
-		typeID, err := res.LastInsertId()
-		if err != nil {
-			return err
-		}
-
-		for _, def := range t.Definitions {
-			_, err := tx.Exec("INSERT INTO definitions (word_id, word_type_id, definition) VALUES (?, ?, ?)",
-				wordID, typeID, def)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
 	return tx.Commit()
 }

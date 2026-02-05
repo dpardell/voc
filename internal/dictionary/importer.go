@@ -15,9 +15,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-const (
-	KaikkiURL = "https://kaikki.org/frwiktionary/Fran%C3%A7ais/kaikki.org-dictionary-Fran%C3%A7ais.jsonl.gz"
-)
+var KaikkiURL string
 
 type Importer struct {
 	DictDir   string
@@ -52,7 +50,13 @@ func (i *Importer) DownloadAndImport(force bool) error {
 
 	fmt.Println("Downloading French dictionary from kaikki.org...")
 
-	resp, err := http.Get(KaikkiURL)
+	url := KaikkiURL
+	if envUrl := os.Getenv("VOC_KAIKKI_URL"); envUrl != "" {
+		url = envUrl
+		fmt.Printf("Using override URL: %s\n", url)
+	}
+
+	resp, err := http.Get(url)
 	if err != nil {
 		return fmt.Errorf("download failed: %v", err)
 	}

@@ -13,7 +13,7 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "voc",
-	Short: "A personal command-line dictionary for language learners",
+	Short: "Voc - Vocabulary trainer",
 	Long: `Voc tracks the words you learn, fetches definitions from Wiktionary,
 and helps you review with interactive quizzes.`,
 	CompletionOptions: cobra.CompletionOptions{
@@ -42,11 +42,10 @@ func init() {
 	var err error
 	db, err = database.New()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error initializing database: %v\n", err)
+		fmt.Fprintf(os.Stderr, "%s: %v\n", i18n.T(i18n.ErrDatabase), err)
 		os.Exit(1)
 	}
 
-	// Dictionary is optional for some commands, but usually needed
 	dict, _ = dictionary.New(detectedLang)
 }
 

@@ -13,46 +13,26 @@ func init() {
 }
 
 var searchCmd = &cobra.Command{
-	Use:   "search [word]",
-	Short: "Search for a word in the dictionary",
-	Long:  "Search for a word in the dictionary without adding it to your vocabulary list. Supports interactive search if no word is provided.",
+	Use:   "search",
+	Short: "Search the dictionary",
+	Long:  "Search the dictionary with the option to add words to your vocabulary.",
 	Run: func(cmd *cobra.Command, args []string) {
 		if dict == nil {
-			fmt.Println("Dictionary not installed. Run 'voc install-dict' first.")
+			fmt.Println(i18n.T(i18n.DictionaryNotInstalled))
 			return
 		}
 
-		var word string
-		if len(args) > 0 {
-			word = args[0]
-		} else {
-			// Interactive mode
-			searchFunc := func(query string, limit int) ([]string, error) {
-				return dict.Search(query, limit)
-			}
-			previewFunc := func(w string) (string, error) {
-				return dict.Preview(w)
-			}
-
-			selected, err := ui.RunFuzzyFinder(i18n.T(i18n.Searching), searchFunc, previewFunc)
-			if err != nil {
-				fmt.Printf("Error: %v\n", err)
-				return
-			}
-			if selected == "" {
-				fmt.Println("Cancelled.")
-				return
-			}
-			word = selected
+		searchFunc := func(query string, limit int) ([]string, error) {
+			return dict.Search(query, limit)
+		}
+		defFunc := func(w string) (string, error) {
+			return dict.Definition(w)
 		}
 
-		// Lookup and print definition
-		data, err := dict.Lookup(word)
+		_, err := ui.RunFuzzyFinder(i18n.T(i18n.Searching), searchFunc, defFunc)
 		if err != nil {
-			fmt.Printf("Error looking up word: %v\n", err)
+			fmt.Printf("Err: %v\n", err)
 			return
 		}
-
-		printDefinition(word, data)
 	},
 }

@@ -65,22 +65,37 @@ var (
 			BorderForeground(subtleColor).
 			Padding(0, 1).
 			MarginLeft(1)
+
+	subtleStyle = lipgloss.NewStyle().
+			Foreground(subtleColor).
+			MarginLeft(2)
 )
 
 type SearchFunc func(query string, limit int) ([]string, error)
-type PreviewFunc func(word string) (string, error)
+type DefFunc func(word string) (string, error)
+type AddFunc func(word string) error
+
+type uiState int
+
+const (
+	stateSearching uiState = iota
+	stateViewingDefinition
+)
 
 type model struct {
-	textInput   textinput.Model
-	viewport    viewport.Model
-	searchFunc  SearchFunc
-	previewFunc PreviewFunc
+	textInput  textinput.Model
+	viewport   viewport.Model
+	searchFunc SearchFunc
+	defFunc    DefFunc
+	addFunc    AddFunc
 
-	title    string
-	results  []string
-	cursor   int
-	selected string
-	quitted  bool
+	state         uiState
+	title         string
+	originalTitle string
+	results       []string
+	cursor        int
+	selected      string
+	quitted       bool
 
 	previewText           string
 	width                 int
@@ -100,7 +115,7 @@ type previewResultMsg struct {
 	err  error
 }
 
-func InitialModel(title string, search SearchFunc, preview PreviewFunc) model {
+func InitialModel(title string, search SearchFunc, def DefFunc) model {
 	textInput := textinput.New()
 	textInput.Placeholder = i18n.T(i18n.TypeToSearch)
 	textInput.Focus()
@@ -110,12 +125,14 @@ func InitialModel(title string, search SearchFunc, preview PreviewFunc) model {
 	viewportModel := viewport.New(0, 0)
 
 	return model{
-		title:       title,
-		textInput:   textInput,
-		viewport:    viewportModel,
-		searchFunc:  search,
-		previewFunc: preview,
-		cursor:      0,
+		title:         title,
+		originalTitle: title,
+		textInput:     textInput,
+		viewport:      viewportModel,
+		searchFunc:    search,
+		defFunc:       def,
+		cursor:        0,
+		state:         stateSearching,
 	}
 }
 
@@ -160,14 +177,32 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.updateViewportContent()
 
 	case tea.KeyMsg:
+		if m.state == stateViewingDefinition {
+			switch msg.Type {
+			case tea.KeyEsc, tea.KeyBackspace:
+				m.state = stateSearching
+				m.title = m.originalTitle
+				m.viewport.Height = m.availableHeight
+				m.updateViewportContent()
+				return m, m.updatePreview()
+			case tea.KeyCtrlC:
+				m.quitted = true
+				return m, tea.Quit
+			}
+			m.viewport, cmd = m.viewport.Update(msg)
+			return m, cmd
+		}
+
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			m.quitted = true
 			return m, tea.Quit
 		case tea.KeyEnter:
 			if len(m.results) > 0 {
-				m.selected = m.results[m.cursor]
-				return m, tea.Quit
+				m.state = stateViewingDefinition
+				m.title = strings.ToUpper(m.results[m.cursor])
+				m.viewport.Height = m.height - availableHeightOffset + 2 // Give more room in full view
+				return m, m.updateFullDefinition()
 			}
 		case tea.KeyUp, tea.KeyCtrlP:
 			if m.cursor > 0 {
@@ -208,7 +243,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var inputCmd tea.Cmd
 	m.textInput, inputCmd = m.textInput.Update(msg)
 
-	if m.textInput.Value() != lastInputValue {
+	if m.state == stateSearching && m.textInput.Value() != lastInputValue {
 		if m.textInput.Value() != "" {
 			cmd = tea.Batch(inputCmd, m.performSearch(m.textInput.Value()))
 		} else {
@@ -221,7 +256,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd = inputCmd
 	}
 
-	m.viewport, _ = m.viewport.Update(msg)
+	if m.state == stateSearching {
+		m.viewport, _ = m.viewport.Update(msg)
+	}
 
 	return m, cmd
 }
@@ -233,27 +270,7 @@ func (m *model) updateViewportContent() {
 			wrapWidth = minContentWidth
 		}
 
-		lines := strings.Split(m.previewText, "\n")
-		var wrappedLines []string
-
-		for _, line := range lines {
-			if strings.TrimSpace(line) == "" {
-				wrappedLines = append(wrappedLines, "")
-				continue
-			}
-
-			wrappedBlock := wordwrap.String(line, wrapWidth)
-			blockLines := strings.Split(wrappedBlock, "\n")
-
-			wrappedLines = append(wrappedLines, blockLines[0])
-
-			for i := 1; i < len(blockLines); i++ {
-				arrow := lipgloss.NewStyle().Foreground(subtleColor).Render("↳ ")
-				wrappedLines = append(wrappedLines, arrow+blockLines[i])
-			}
-		}
-
-		m.viewport.SetContent(strings.Join(wrappedLines, "\n"))
+		m.viewport.SetContent(wordwrap.String(m.previewText, wrapWidth))
 	}
 }
 
@@ -265,12 +282,23 @@ func (m model) performSearch(query string) tea.Cmd {
 }
 
 func (m model) updatePreview() tea.Cmd {
-	if m.previewFunc == nil || len(m.results) == 0 {
+	if m.defFunc == nil || len(m.results) == 0 {
 		return nil
 	}
 	word := m.results[m.cursor]
 	return func() tea.Msg {
-		text, err := m.previewFunc(word)
+		text, err := m.defFunc(word)
+		return previewResultMsg{text: text, err: err}
+	}
+}
+
+func (m model) updateFullDefinition() tea.Cmd {
+	if m.defFunc == nil || len(m.results) == 0 {
+		return nil
+	}
+	word := m.results[m.cursor]
+	return func() tea.Msg {
+		text, err := m.defFunc(word)
 		return previewResultMsg{text: text, err: err}
 	}
 }
@@ -283,6 +311,18 @@ func (m model) View() string {
 	title := titleStyle.Render(m.title)
 	searchBoxWidth := m.width - layoutPadding
 	searchView := inputBoxStyle.Width(searchBoxWidth).Render(m.textInput.View())
+
+	if m.state == stateViewingDefinition {
+		m.viewport.Width = m.width - layoutPadding
+		m.updateViewportContent()
+		defView := previewStyle.
+			Width(m.width - layoutPadding).
+			Height(m.height - availableHeightOffset + 2).
+			Render(m.viewport.View())
+
+		backMsg := subtleStyle.Render("Press Esc or Backspace to go back")
+		return fmt.Sprintf("\n%s\n%s\n%s", title, defView, backMsg)
+	}
 
 	if m.height < minWindowHeight {
 		return fmt.Sprintf("\n%s\n%s\n%s", title, searchView, i18n.T(resizeWindowMsg))
@@ -338,8 +378,8 @@ func (m model) View() string {
 	return fmt.Sprintf("\n%s\n%s\n%s", title, searchView, content)
 }
 
-func RunFuzzyFinder(title string, search SearchFunc, preview PreviewFunc) (string, error) {
-	program := tea.NewProgram(InitialModel(title, search, preview), tea.WithAltScreen())
+func RunFuzzyFinder(title string, search SearchFunc, def DefFunc) (string, error) {
+	program := tea.NewProgram(InitialModel(title, search, def), tea.WithAltScreen())
 	finalModel, err := program.Run()
 	if err != nil {
 		return "", err

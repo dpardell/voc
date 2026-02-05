@@ -14,16 +14,17 @@ func init() {
 
 var installDictCmd = &cobra.Command{
 	Use:   "install-dict",
-	Short: "Download and install the French dictionary",
+	Short: "Install the French dictionary",
+	Long:  "Download and install the French dictionary",
 	Run: func(cmd *cobra.Command, args []string) {
 		force, _ := cmd.Flags().GetBool("force")
 		importer, err := dictionary.NewImporter(detectedLang)
 		if err != nil {
-			fmt.Printf("Error: %v\n", err)
+			fmt.Printf("Err: %v\n", err)
 			return
 		}
 		if err := importer.DownloadAndImport(force); err != nil {
-			fmt.Printf("Error installing dictionary: %v\n", err)
+			fmt.Printf("Err: %v\n", err)
 		}
 	},
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"voc/internal/i18n"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -23,24 +24,23 @@ type TypeData struct {
 	Definitions []string
 }
 
-var DefaultDictionaryPath string
+var DefaultDictionaryDirectory string
 
 func GetDictionaryPath(lang string) (string, error) {
 	if envPath := os.Getenv("VOC_DB_PATH"); envPath != "" {
 		return envPath, nil
 	}
-	if DefaultDictionaryPath != "" {
-		return DefaultDictionaryPath, nil
+
+	if DefaultDictionaryDirectory != "" {
+		return filepath.Join(DefaultDictionaryDirectory, fmt.Sprintf("dictionary_%s.db", lang)), nil
 	}
+
 	configDir, err := os.UserConfigDir()
 	if err != nil {
 		return "", err
 	}
 
-	dbName := "dictionary.db"
-	if lang != "" && lang != "en" {
-		dbName = fmt.Sprintf("dictionary_%s.db", lang)
-	}
+	dbName := fmt.Sprintf("dictionary_%s.db", lang)
 
 	return filepath.Join(configDir, "voc", dbName), nil
 }
@@ -52,7 +52,7 @@ func New(lang string) (*Dictionary, error) {
 	}
 
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("dictionary not found at %s", dbPath)
+		return nil, fmt.Errorf("%s %s", i18n.T("DictionaryNotFound"), dbPath)
 	}
 
 	db, err := sql.Open("sqlite3", dbPath)
@@ -132,31 +132,25 @@ func (d *Dictionary) Search(query string, limit int) ([]string, error) {
 		results = append(results, w)
 	}
 
-	// Manual post-sort to ensure prefix matches are first (if FTS didn't guarantee it perfectly)
-	// although the query usually handles it.
-	return results[:min(len(results), limit)], nil
+	// return results[:min(len(results), limit)], nil
+	return results, nil
 }
 
-func (d *Dictionary) Preview(word string) (string, error) {
+func (d *Dictionary) Definition(word string) (string, error) {
 	data, err := d.Lookup(word)
-	if err != nil {
+	if err != nil || data == nil {
 		return "", err
-	}
-	if data == nil {
-		return "", nil
 	}
 
 	var lines []string
 	for i, t := range data.Types {
-		if i >= 3 {
-			break
+		typeStr := fmt.Sprintf("%s:", strings.ToUpper(t.Type))
+		if i > 0 {
+			typeStr = "\n" + typeStr
 		}
-		lines = append(lines, fmt.Sprintf("%s:", t.Type))
-		for j, def := range t.Definitions {
-			if j >= 2 {
-				break
-			}
-			lines = append(lines, fmt.Sprintf("  %s", def))
+		lines = append(lines, typeStr)
+		for _, def := range t.Definitions {
+			lines = append(lines, fmt.Sprintf("- %s", def))
 		}
 	}
 	return strings.Join(lines, "\n"), nil

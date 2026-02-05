@@ -3,7 +3,7 @@ PREFIX?=$(HOME)/.local
 bindir?=$(PREFIX)/bin
 datadir?=$(PREFIX)/share/voc
 
-LDFLAGS=-ldflags "-X 'voc/internal/dictionary.DefaultDictionaryPath=$(datadir)/dictionary.db' -X 'voc/internal/database.DefaultUserDBPath=$(datadir)/voc.db'"
+LDFLAGS=-ldflags "-X 'voc/internal/dictionary.DefaultDictionaryDirectory=$(datadir)' -X 'voc/internal/database.DefaultUserDBPath=$(datadir)/voc.db'"
 
 .PHONY: all build clean install uninstall
 
