@@ -2,8 +2,9 @@ BINARY_NAME?=voc
 PREFIX?=$(HOME)/.local
 bindir?=$(PREFIX)/bin
 datadir?=$(PREFIX)/share/voc
+KAIKKI_URL?=https://kaikki.org/frwiktionary/Fran%C3%A7ais/kaikki.org-dictionary-Fran%C3%A7ais.jsonl.gz
 
-LDFLAGS=-ldflags "-X 'voc/internal/dictionary.DefaultDictionaryDirectory=$(datadir)' -X 'voc/internal/database.DefaultUserDBPath=$(datadir)/voc.db'"
+LDFLAGS=-ldflags "-X 'voc/internal/dictionary.DefaultDictionaryDirectory=$(datadir)' -X 'voc/internal/database.DefaultUserDBPath=$(datadir)/voc.db' -X 'voc/internal/dictionary.KaikkiURL=$(KAIKKI_URL)'"
 
 .PHONY: all build clean install uninstall
 

@@ -23,6 +23,8 @@ type Importer struct {
 	CacheFile string
 }
 
+// TODO: Need to go over this file and see if there is a better way
+
 func NewImporter(lang string) (*Importer, error) {
 	dbPath, err := GetDictionaryPath(lang)
 	if err != nil {
@@ -41,20 +43,14 @@ func NewImporter(lang string) (*Importer, error) {
 	}, nil
 }
 
-func (i *Importer) DownloadAndImport(force bool) error {
+func (i *Importer) DownloadAndImport(force bool, url string) error {
 	if _, err := os.Stat(i.CacheFile); err == nil && !force {
 		fmt.Println("Using cached dictionary file...")
 		fmt.Println("  (use --force to re-download)")
 		return i.importFile()
 	}
 
-	fmt.Println("Downloading French dictionary from kaikki.org...")
-
-	url := KaikkiURL
-	if envUrl := os.Getenv("VOC_KAIKKI_URL"); envUrl != "" {
-		url = envUrl
-		fmt.Printf("Using override URL: %s\n", url)
-	}
+	fmt.Printf("Downloading French dictionary from %s...\n", url)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -66,7 +62,6 @@ func (i *Importer) DownloadAndImport(force bool) error {
 		return fmt.Errorf("download failed with status: %s", resp.Status)
 	}
 
-	// Direct piping from response body to decompressor to file
 	fmt.Println("Decompressing and saving...")
 	gzReader, err := gzip.NewReader(resp.Body)
 	if err != nil {
@@ -91,7 +86,7 @@ func (i *Importer) DownloadAndImport(force bool) error {
 func (i *Importer) importFile() error {
 	fmt.Println("Importing into database...")
 
-	os.Remove(i.DictDB) // Clean slate
+	os.Remove(i.DictDB)
 
 	db, err := sql.Open("sqlite3", i.DictDB)
 	if err != nil {
@@ -99,7 +94,6 @@ func (i *Importer) importFile() error {
 	}
 	defer db.Close()
 
-	// Initial schema
 	if _, err := db.Exec(`
 		CREATE TABLE dictionary (word TEXT NOT NULL, pos TEXT, gloss TEXT NOT NULL);
 		CREATE INDEX idx_word ON dictionary(word);
@@ -115,7 +109,6 @@ func (i *Importer) importFile() error {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-	// Larger buffer for long lines
 	buf := make([]byte, 1024*1024)
 	scanner.Buffer(buf, 10*1024*1024)
 

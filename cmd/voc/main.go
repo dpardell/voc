@@ -23,22 +23,11 @@ and helps you review with interactive quizzes.`,
 
 // Global instances
 var (
-	db           *database.Database
-	dict         *dictionary.Dictionary
-	detectedLang string
+	db   *database.Database
+	dict *dictionary.Dictionary
 )
 
 func init() {
-	// Initialize language
-	lang := os.Getenv("VOC_LANG")
-	if lang == "" {
-		lang = os.Getenv("LANG")
-	}
-	if len(lang) >= 2 {
-		detectedLang = lang[:2]
-		i18n.SetLanguage(detectedLang)
-	}
-
 	var err error
 	db, err = database.New()
 	if err != nil {
@@ -46,7 +35,7 @@ func init() {
 		os.Exit(1)
 	}
 
-	dict, _ = dictionary.New(detectedLang)
+	dict, _ = dictionary.New(i18n.GetLanguage())
 }
 
 func Execute() {

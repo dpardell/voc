@@ -1,6 +1,9 @@
 package i18n
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 type StringID string
 
@@ -18,6 +21,9 @@ const (
 	ErrWordNotFound        StringID = "ErrWordNotFound"
 	ErrDatabase            StringID = "ErrDatabase"
 	DictionaryNotFound     StringID = "DictionaryNotFound"
+	PromptDownloadDefault  StringID = "PromptDownloadDefault"
+	PromptCustomURL        StringID = "PromptCustomURL"
+	InstallCancelled       StringID = "InstallCancelled"
 )
 
 var en = map[StringID]string{
@@ -34,6 +40,9 @@ var en = map[StringID]string{
 	ErrWordNotFound:        "Word not found in dictionary",
 	ErrDatabase:            "Error initializing database",
 	DictionaryNotFound:     "Dictionary not found at %s",
+	PromptDownloadDefault:  "Download dictionary from %s? [Y/n/c (custom)] ",
+	PromptCustomURL:        "Enter custom dictionary URL: ",
+	InstallCancelled:       "Installation cancelled.",
 }
 
 var fr = map[StringID]string{
@@ -50,6 +59,9 @@ var fr = map[StringID]string{
 	ErrWordNotFound:        "Mot non trouvé dans le dictionnaire",
 	ErrDatabase:            "Erreur lors de l'initialisation de la base de données",
 	DictionaryNotFound:     "Dictionnaire non trouvé à %s",
+	PromptDownloadDefault:  "Télécharger le dictionnaire depuis %s ? [Y/n/c (personnalisé)] ",
+	PromptCustomURL:        "Entrez l'URL personnalisée du dictionnaire : ",
+	InstallCancelled:       "Installation annulée.",
 }
 
 var activeLocale = "en"
@@ -59,10 +71,24 @@ var locales = map[string]map[StringID]string{
 	"fr": fr,
 }
 
+func init() {
+	lang := os.Getenv("VOC_LANG")
+	if lang == "" {
+		lang = os.Getenv("LANG")
+	}
+	if len(lang) >= 2 {
+		SetLanguage(lang[:2])
+	}
+}
+
 func SetLanguage(lang string) {
 	if _, ok := locales[lang]; ok {
 		activeLocale = lang
 	}
+}
+
+func GetLanguage() string {
+	return activeLocale
 }
 
 func T(id StringID, args ...any) string {
