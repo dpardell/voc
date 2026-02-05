@@ -27,12 +27,7 @@ type WordType struct {
 	Definitions []string
 }
 
-type Comment struct {
-	ID        int
-	WordID    int
-	Comment   string
-	CreatedAt string
-}
+
 
 var DefaultUserDBPath string
 
@@ -91,13 +86,7 @@ func createTables(db *sql.DB) error {
 			FOREIGN KEY(word_id) REFERENCES words(id),
 			FOREIGN KEY(word_type_id) REFERENCES word_types(id)
 		)`,
-		`CREATE TABLE IF NOT EXISTS comments (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			word_id INTEGER NOT NULL,
-			comment TEXT NOT NULL,
-			created_at TEXT NOT NULL,
-			FOREIGN KEY(word_id) REFERENCES words(id)
-		)`,
+
 	}
 
 	for _, query := range queries {
@@ -235,50 +224,11 @@ func (d *Database) GetAllWords() ([]Word, error) {
 	return words, nil
 }
 
-func (d *Database) AddComment(word string, comment string) error {
-	var wordID int
-	err := d.db.QueryRow("SELECT id FROM words WHERE word = ?", word).Scan(&wordID)
-	if err != nil {
-		return err
-	}
 
-	_, err = d.db.Exec("INSERT INTO comments (word_id, comment, created_at) VALUES (?, ?, ?)",
-		wordID, comment, time.Now().Format(time.RFC3339))
-	return err
-}
 
-func (d *Database) GetComments(word string) ([]Comment, error) {
-	var wordID int
-	err := d.db.QueryRow("SELECT id FROM words WHERE word = ?", word).Scan(&wordID)
-	if err == sql.ErrNoRows {
-		return nil, nil // Or error?
-	}
-	if err != nil {
-		return nil, err
-	}
 
-	rows, err := d.db.Query("SELECT id, comment, created_at FROM comments WHERE word_id = ? ORDER BY id", wordID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
 
-	var comments []Comment
-	for rows.Next() {
-		var c Comment
-		c.WordID = wordID
-		if err := rows.Scan(&c.ID, &c.Comment, &c.CreatedAt); err != nil {
-			return nil, err
-		}
-		comments = append(comments, c)
-	}
-	return comments, nil
-}
 
-func (d *Database) DeleteComment(wordID int, commentID int) error {
-	_, err := d.db.Exec("DELETE FROM comments WHERE id = ? AND word_id = ?", commentID, wordID)
-	return err
-}
 
 func (d *Database) GetWordID(word string) (int, error) {
 	var id int
@@ -299,10 +249,7 @@ func (d *Database) DeleteWord(word string) error {
 	}
 	defer tx.Rollback()
 
-	_, err = tx.Exec("DELETE FROM comments WHERE word_id = ?", wordID)
-	if err != nil {
-		return err
-	}
+
 	_, err = tx.Exec("DELETE FROM definitions WHERE word_id = ?", wordID)
 	if err != nil {
 		return err
@@ -326,7 +273,7 @@ func (d *Database) DeleteAllWords() error {
 	}
 	defer tx.Rollback()
 
-	tables := []string{"comments", "definitions", "word_types", "words"}
+	tables := []string{"definitions", "word_types", "words"}
 	for _, table := range tables {
 		if _, err := tx.Exec("DELETE FROM " + table); err != nil {
 			return err

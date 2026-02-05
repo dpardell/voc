@@ -10,15 +10,12 @@ import (
 
 func init() {
 	rootCmd.AddCommand(addCmd)
-	addCmd.Flags().StringP("comment", "c", "", "Add a comment")
 }
 
 var addCmd = &cobra.Command{
 	Use:   "add [word]",
 	Short: "Add a word to your dictionary",
 	Run: func(cmd *cobra.Command, args []string) {
-		comment, _ := cmd.Flags().GetString("comment")
-
 		var word string
 		if len(args) > 0 {
 			word = args[0]
@@ -50,16 +47,14 @@ var addCmd = &cobra.Command{
 		}
 
 		// Add Logic
-		added, err := addWordToDB(word, comment)
+		added, err := addWordToDB(word)
 		if err != nil {
 			fmt.Printf("Error: %v\n", err)
 			return
 		}
 
 		if !added {
-			if comment == "" {
-				fmt.Printf("Word '%s' already exists.\n", word)
-			}
+			fmt.Printf("Word '%s' already exists.\n", word)
 			return
 		}
 

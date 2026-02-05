@@ -108,12 +108,5 @@ var showCmd = &cobra.Command{
 			}
 		}
 
-		comments, _ := db.GetComments(word)
-		if len(comments) > 0 {
-			fmt.Println("  Comments:")
-			for _, c := range comments {
-				fmt.Printf("    %d. %s\n", c.ID, c.Comment)
-			}
-		}
 	},
 }

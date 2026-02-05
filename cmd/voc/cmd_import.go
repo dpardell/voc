@@ -66,7 +66,7 @@ var importCmd = &cobra.Command{
 			}
 
 			// Use helper logic directly
-			if success, _ := addWordToDB(word, ""); success {
+			if success, _ := addWordToDB(word); success {
 				count++
 			} else {
 				skipped++
