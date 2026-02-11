@@ -6,8 +6,19 @@ import (
 	"path/filepath"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/mattn/go-sqlite3"
+	"golang.org/x/text/collate"
+	"golang.org/x/text/language"
 )
+
+func init() {
+	sql.Register("sqlite3_with_collation", &sqlite3.SQLiteDriver{
+		ConnectHook: func(conn *sqlite3.SQLiteConn) error {
+			cl := collate.New(language.English, collate.Loose)
+			return conn.RegisterCollation("UNICODE", cl.CompareString)
+		},
+	})
+}
 
 type Database struct {
 	db *sql.DB
@@ -48,7 +59,7 @@ func New() (*Database, error) {
 		return nil, err
 	}
 
-	db, err := sql.Open("sqlite3", dbPath)
+	db, err := sql.Open("sqlite3_with_collation", dbPath)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +198,7 @@ func (d *Database) GetWord(word string) (*Word, error) {
 }
 
 func (d *Database) GetAllWords() ([]Word, error) {
-	rows, err := d.db.Query("SELECT id, word, incomplete, created_at FROM words ORDER BY word")
+	rows, err := d.db.Query("SELECT id, word, incomplete, created_at FROM words ORDER BY word COLLATE UNICODE")
 	if err != nil {
 		return nil, err
 	}

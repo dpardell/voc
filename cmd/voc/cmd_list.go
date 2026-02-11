@@ -8,8 +8,6 @@ import (
 	"voc/internal/ui"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/text/collate"
-	"golang.org/x/text/language"
 )
 
 func init() {
@@ -35,10 +33,6 @@ var listCmd = &cobra.Command{
 		for _, w := range words {
 			wordStrings = append(wordStrings, w.Word)
 		}
-
-		// Sort words using locale-aware collation (handles accents like é with e)
-		cl := collate.New(language.English, collate.Loose)
-		cl.SortStrings(wordStrings)
 
 		searchFunc := func(query string, limit int) ([]string, error) {
 			var filtered []string
