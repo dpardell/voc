@@ -166,7 +166,7 @@ type vocabToggleMsg struct {
 	err     error
 }
 
-func InitialModel(title string, search SearchFunc, def DefFunc, check CheckVocabFunc, toggle ToggleVocabFunc) model {
+func InitialModel(title string, initialResults []string, search SearchFunc, def DefFunc, check CheckVocabFunc, toggle ToggleVocabFunc) model {
 	hour := time.Now().Hour()
 	isNight := hour >= 21 || hour < 7
 
@@ -199,6 +199,12 @@ func InitialModel(title string, search SearchFunc, def DefFunc, check CheckVocab
 
 	viewportModel := viewport.New(0, 0)
 
+	// If we have initial results, populate them
+	results := initialResults
+	if results == nil {
+		results = []string{}
+	}
+
 	return model{
 		title:           title,
 		originalTitle:   title,
@@ -211,11 +217,18 @@ func InitialModel(title string, search SearchFunc, def DefFunc, check CheckVocab
 		earthSpinner:    s,
 		cursor:          0,
 		state:           stateSearching,
+		results:         results,
 	}
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.Batch(textinput.Blink, m.earthSpinner.Tick)
+	var cmds []tea.Cmd
+	cmds = append(cmds, textinput.Blink, m.earthSpinner.Tick)
+	// If we have results, we might want to trigger a preview update for the first item if desirable,
+	// but the original logic waits for selection.
+	// Actually, in stateSearching, the preview usually shows "Select an item".
+	// Let's keep it simple for now.
+	return tea.Batch(cmds...)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -525,8 +538,8 @@ func (m model) View() string {
 	return fmt.Sprintf("\n%s\n%s\n%s\n%s", title, searchView, content, hints)
 }
 
-func RunFuzzyFinder(title string, search SearchFunc, def DefFunc, check CheckVocabFunc, toggle ToggleVocabFunc) (string, error) {
-	program := tea.NewProgram(InitialModel(title, search, def, check, toggle), tea.WithAltScreen())
+func RunFuzzyFinder(title string, initialResults []string, search SearchFunc, def DefFunc, check CheckVocabFunc, toggle ToggleVocabFunc) (string, error) {
+	program := tea.NewProgram(InitialModel(title, initialResults, search, def, check, toggle), tea.WithAltScreen())
 	finalModel, err := program.Run()
 	if err != nil {
 		return "", err

@@ -75,7 +75,7 @@ var searchCmd = &cobra.Command{
 			return true, nil
 		}
 
-		_, err := ui.RunFuzzyFinder(i18n.T(i18n.Searching), searchFunc, defFunc, checkVocabFunc, toggleVocabFunc)
+		_, err := ui.RunFuzzyFinder(i18n.T(i18n.Searching), nil, searchFunc, defFunc, checkVocabFunc, toggleVocabFunc)
 		if err != nil {
 			fmt.Printf("Err: %v\n", err)
 			return

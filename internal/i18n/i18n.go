@@ -28,6 +28,7 @@ const (
 	HintsDefinition        StringID = "HintsDefinition"
 	Saved                  StringID = "Saved"
 	NotSaved               StringID = "NotSaved"
+	WordCount              StringID = "WordCount"
 )
 
 var en = map[StringID]string{
@@ -51,6 +52,7 @@ var en = map[StringID]string{
 	HintsDefinition:        "Esc: Back • J/K: Scroll • Ctrl-P/N: Prev/Next • Ctrl-S: Toggle Vocab",
 	Saved:                  "SAVED ❤️",
 	NotSaved:               "NOT SAVED",
+	WordCount:              "Your List (%d words)",
 }
 
 var fr = map[StringID]string{
@@ -74,6 +76,7 @@ var fr = map[StringID]string{
 	HintsDefinition:        "Esc: Retour • J/K: Défiler • Ctrl-P/N: Préc/Suiv • Ctrl-S: Vocabulaire",
 	Saved:                  "ENREGISTRÉ ❤️",
 	NotSaved:               "NON ENREGISTRÉ",
+	WordCount:              "Votre Liste (%d mots)",
 }
 
 var activeLocale = "en"
