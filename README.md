@@ -10,15 +10,15 @@ Voc is a CLI language learning & dictionary tool that prioritizes quick access t
 This project started when I was a software developer in a French class. I wanted a way to record new words as they came to me with as little friction as possible.
 That tool was originally written in Ruby.
 I have since put a some effort into cleaning this up and rewritting it in Go, but it is still very much a tool I am building for myself. That being said, contributions
-are defintely welcome.*
+are defintely welcome. Long term, I would like for this project to head in the direction of a more complete CLI-based langugage learning app.*
 
 ## Features
 
 - **Dictionary Search**: Interactive, real-time search in local dictionary with text indexing.
 - **Personal Vocabulary**: Save words to your personal vocabulary.
 - **Multi-language UI**: Support for different languages in the interface (currently English and French).
-- **Language-specific Dictionaries (WIP)**: Load different dictionary databases based on your target language.
-- **Quiz Mode(WIP)**: Test your vocabulary with interactive quizzes.
+- **Language-specific Dictionaries (Work in Progress)**: Load different dictionary databases based on your target language.
+- **Quiz Mode(Work in Progress)**: Test your vocabulary with interactive quizzes.
 - **Import/Export**: Manage your data via CSV or plain text.
 
 ## Installation
