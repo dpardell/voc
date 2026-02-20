@@ -231,6 +231,57 @@ func (d *Database) GetAllWords() ([]Word, error) {
 	return words, nil
 }
 
+func (d *Database) GetRandomWords(count int) ([]Word, error) {
+	// SQLite random ordering is efficient enough for small datasets
+	rows, err := d.db.Query("SELECT id, word, incomplete, created_at FROM words ORDER BY RANDOM() LIMIT ?", count)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var words []Word
+	for rows.Next() {
+		var w Word
+		if err := rows.Scan(&w.ID, &w.Word, &w.Incomplete, &w.CreatedAt); err != nil {
+			return nil, err
+		}
+
+		// Fetch types for each word (N+1 query, but N is small here)
+		typeRows, err := d.db.Query("SELECT id, type FROM word_types WHERE word_id = ?", w.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		for typeRows.Next() {
+			var wt WordType
+			if err := typeRows.Scan(&wt.ID, &wt.Type); err != nil {
+				typeRows.Close()
+				return nil, err
+			}
+
+			// Fetch definitions for this type
+			defRows, err := d.db.Query("SELECT definition FROM definitions WHERE word_type_id = ?", wt.ID)
+			if err != nil {
+				typeRows.Close()
+				return nil, err
+			}
+			for defRows.Next() {
+				var def string
+				if err := defRows.Scan(&def); err == nil {
+					wt.Definitions = append(wt.Definitions, def)
+				}
+			}
+			defRows.Close()
+
+			w.Types = append(w.Types, wt)
+		}
+		typeRows.Close()
+
+		words = append(words, w)
+	}
+	return words, nil
+}
+
 func (d *Database) DeleteWord(word string) error {
 	var wordID int
 	err := d.db.QueryRow("SELECT id FROM words WHERE word = ?", word).Scan(&wordID)
