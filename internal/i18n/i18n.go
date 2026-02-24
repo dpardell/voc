@@ -29,6 +29,13 @@ const (
 	Saved                  StringID = "Saved"
 	NotSaved               StringID = "NotSaved"
 	WordCount              StringID = "WordCount"
+	QuizTitle              StringID = "QuizTitle"
+	QuizQuestion           StringID = "QuizQuestion"
+	QuizScore              StringID = "QuizScore"
+	QuizCorrect            StringID = "QuizCorrect"
+	QuizWrong              StringID = "QuizWrong"
+	QuizCompleted          StringID = "QuizCompleted"
+	HintsQuiz              StringID = "HintsQuiz"
 )
 
 var en = map[StringID]string{
@@ -53,6 +60,13 @@ var en = map[StringID]string{
 	Saved:                  "SAVED ❤️",
 	NotSaved:               "NOT SAVED",
 	WordCount:              "Your List (%d words)",
+	QuizTitle:              "VOCABULARY QUIZ",
+	QuizQuestion:           "Question %d/%d",
+	QuizScore:              "Score: %d/%d",
+	QuizCorrect:            "CORRECT! ✨",
+	QuizWrong:              "WRONG! The correct answer was: %s",
+	QuizCompleted:          "Quiz completed! Final Score: %d/%d",
+	HintsQuiz:              "Enter: Submit/Next • Ctrl-C: Quit",
 }
 
 var fr = map[StringID]string{
@@ -77,6 +91,13 @@ var fr = map[StringID]string{
 	Saved:                  "ENREGISTRÉ ❤️",
 	NotSaved:               "NON ENREGISTRÉ",
 	WordCount:              "Votre Liste (%d mots)",
+	QuizTitle:              "QUIZ DE VOCABULAIRE",
+	QuizQuestion:           "Question %d/%d",
+	QuizScore:              "Score : %d/%d",
+	QuizCorrect:            "CORRECT ! ✨",
+	QuizWrong:              "MAUVAIS ! La bonne réponse était : %s",
+	QuizCompleted:          "Quiz terminé ! Score final : %d/%d",
+	HintsQuiz:              "Entrée : Valider/Suivant • Ctrl-C : Quitter",
 }
 
 var activeLocale = "en"

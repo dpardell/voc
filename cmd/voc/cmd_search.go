@@ -18,42 +18,42 @@ var searchCmd = &cobra.Command{
 	Short: "Search the dictionary",
 	Long:  "Search the dictionary with the option to add words to your vocabulary.",
 	Run: func(cmd *cobra.Command, args []string) {
-		if dict == nil {
+		if vocApp.Dict == nil {
 			fmt.Println(i18n.T(i18n.DictionaryNotInstalled))
 			return
 		}
 
 		searchFunc := func(query string, limit int) ([]string, error) {
-			return dict.Search(query, limit)
+			return vocApp.Dict.Search(query, limit)
 		}
 		defFunc := func(w string) (string, error) {
-			return dict.Definition(w)
+			return vocApp.Dict.Definition(w)
 		}
 
 		checkVocabFunc := func(word string) (bool, error) {
-			if db == nil {
+			if vocApp.DB == nil {
 				return false, nil
 			}
-			return db.WordExists(word)
+			return vocApp.DB.WordExists(word)
 		}
 
 		toggleVocabFunc := func(word string) (bool, error) {
-			if db == nil {
+			if vocApp.DB == nil {
 				return false, nil
 			}
-			exists, err := db.WordExists(word)
+			exists, err := vocApp.DB.WordExists(word)
 			if err != nil {
 				return false, err
 			}
 
 			if exists {
-				if err := db.DeleteWord(word); err != nil {
+				if err := vocApp.DB.DeleteWord(word); err != nil {
 					return true, err
 				}
 				return false, nil
 			}
 
-			defData, err := dict.Lookup(word)
+			defData, err := vocApp.Dict.Lookup(word)
 			if err != nil {
 				return false, err
 			}
@@ -69,7 +69,7 @@ var searchCmd = &cobra.Command{
 				})
 			}
 
-			if err := db.AddWord(word, dbTypes, false); err != nil {
+			if err := vocApp.DB.AddWord(word, dbTypes, false); err != nil {
 				return false, err
 			}
 			return true, nil

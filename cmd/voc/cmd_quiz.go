@@ -2,13 +2,13 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"math/rand"
 	"os"
-	"strings"
-	"time"
 
-	"voc/internal/llm"
+	"voc/internal/database"
+	"voc/internal/ui"
 
 	"github.com/spf13/cobra"
 )
@@ -28,31 +28,33 @@ var quizCmd = &cobra.Command{
 			runFlashcards()
 			return
 		}
-		runAIQuiz()
+		runAIQuiz(cmd.Context())
 	},
 }
 
-func runAIQuiz() {
-	apiKey := os.Getenv("GEMINI_API_KEY")
-	if apiKey == "" {
-		fmt.Println("Error: GEMINI_API_KEY environment variable not set.")
-		fmt.Println("Please set it to your Gemini API key to use the AI quiz mode.")
-		fmt.Println("Example: export GEMINI_API_KEY=your_key_here")
-		fmt.Println("Or use --flashcards for offline mode.")
-		return
+func runAIQuiz(ctx context.Context) {
+	if ctx == nil {
+		ctx = context.Background()
 	}
-
-	client, err := llm.NewClient(apiKey)
+	client, err := vocApp.GetLLMClient()
 	if err != nil {
-		fmt.Printf("Error initializing AI client: %v\n", err)
+		fmt.Printf("Error: %v\n", err)
+		fmt.Println("Please set VERTEX_API_KEY and VERTEX_PROJECT_ID.")
+		fmt.Println("Or use --flashcards for offline mode.")
+		fmt.Println("\nPress Enter to continue...")
+		bufio.NewScanner(os.Stdin).Scan()
 		return
 	}
 	defer client.Close()
 
-	fmt.Println("Generating quiz...")
+	progress, err := database.GetProgress()
+	if err != nil {
+		fmt.Printf("Error reading progress: %v\n", err)
+		return
+	}
 
-	// Fetch 10 random words
-	words, err := db.GetRandomWords(10)
+	// Fetch 10 random words for the quiz
+	words, err := vocApp.DB.GetRandomWords(10)
 	if err != nil {
 		fmt.Printf("Error fetching words: %v\n", err)
 		return
@@ -60,6 +62,8 @@ func runAIQuiz() {
 
 	if len(words) < 4 {
 		fmt.Println("Not enough words to generate a quiz. Add more words first!")
+		fmt.Println("\nPress Enter to continue...")
+		bufio.NewScanner(os.Stdin).Scan()
 		return
 	}
 
@@ -68,45 +72,23 @@ func runAIQuiz() {
 		targetWords = append(targetWords, w.Word)
 	}
 
-	// We can use the same list for context for now
-	questions, err := client.GenerateQuiz(targetWords, targetWords)
+	result, err := ui.RunQuiz(client, targetWords, progress)
 	if err != nil {
-		fmt.Printf("Error generating quiz: %v\n", err)
+		fmt.Printf("Error running quiz: %v\n", err)
 		return
 	}
 
-	scanner := bufio.NewScanner(os.Stdin)
-	score := 0
-
-	for i, q := range questions {
-		fmt.Printf("\nQuestion %d/%d: %s\n", i+1, len(questions), q.Question)
-		for j, opt := range q.Options {
-			fmt.Printf("  %c) %s\n", 'A'+j, opt)
-		}
-
-		fmt.Print("Answer: ")
-		if scanner.Scan() {
-			ans := strings.TrimSpace(strings.ToUpper(scanner.Text()))
-			if len(ans) != 1 || ans < "A" || ans > "D" {
-				fmt.Println("Invalid input. Skipping.")
-				continue
-			}
-
-			idx := int(ans[0] - 'A')
-			if idx == q.CorrectAnswerIndex {
-				fmt.Println("Correct!")
-				score++
-			} else {
-				fmt.Printf("Wrong! The correct answer was %c) %s\n", 'A'+q.CorrectAnswerIndex, q.Options[q.CorrectAnswerIndex])
-			}
+	if result != nil && result.NewProgress != "" {
+		progressPath, _ := database.GetProgressPath()
+		if err := os.WriteFile(progressPath, []byte(result.NewProgress), 0644); err != nil {
+			fmt.Printf("Error saving progress file: %v\n", err)
 		}
 	}
-
-	fmt.Printf("\nQuiz completed! Score: %d/%d\n", score, len(questions))
 }
 
+
 func runFlashcards() {
-	words, err := db.GetAllWords()
+	words, err := vocApp.DB.GetAllWords()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
@@ -117,7 +99,6 @@ func runFlashcards() {
 		return
 	}
 
-	rand.Seed(time.Now().UnixNano())
 	perm := rand.Perm(len(words))
 
 	fmt.Println("Flashcards mode - Press Enter to see definition, Ctrl+C to exit")
@@ -129,7 +110,7 @@ func runFlashcards() {
 		w := words[idx]
 
 		// Fetch full details
-		fullWord, err := db.GetWord(w.Word)
+		fullWord, err := vocApp.DB.GetWord(w.Word)
 		if err != nil || fullWord == nil || len(fullWord.Types) == 0 {
 			continue
 		}

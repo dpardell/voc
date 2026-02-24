@@ -16,9 +16,11 @@ are defintely welcome. Long term, I would like for this project to head in the d
 
 - **Dictionary Search**: Interactive, real-time search in local dictionary with text indexing.
 - **Personal Vocabulary**: Save words to your personal vocabulary.
+- **AI-Powered Learning**:
+  - **Interactive Quiz**: Test your knowledge with a mix of multiple-choice and fill-in-the-blank questions.
+  - **Language Coach (`voc convo`)**: Chat with a friendly AI coach that provides real-time grammar and stylistic corrections.
+  - **Progress Tracking**: A persistent `progress.md` file keeps a high-level overview of your grammar competency and vocabulary range.
 - **Multi-language UI**: Support for different languages in the interface (currently English and French).
-- **Language-specific Dictionaries (Work in Progress)**: Load different dictionary databases based on your target language.
-- **Quiz Mode(Work in Progress)**: Test your vocabulary with interactive quizzes.
 - **Import/Export**: Manage your data via CSV or plain text.
 
 ## Installation
@@ -53,6 +55,7 @@ Requirements: Go 1.25+
 
 Voc uses these locations by default (set at build time), but you can override them at runtime using environment variables:
 
+- `GEMINI_API_KEY`: **Required for AI features.** Your Google Gemini API key.
 - `VOC_DB_PATH`: Path to the dictionary database (e.g., `dictionary.db` or `dictionary_fr.db`).
 - `VOC_USER_DB_PATH`: Path to your personal word collection database (default: `$(datadir)/voc.db`).
 - `VOC_LANG`: Set the interface and dictionary language (e.g., `fr`). If unset, it attempts to detect from your `LANG` environment variable.
@@ -95,16 +98,24 @@ Definition view:
 - `Ctrl+S`: Toggle word in your vocabulary (Save/Remove)
 - `Esc`: Back / Exit
 
-### 3. Review Words
+### 3. Quiz Yourself
+Start an AI-powered quiz session tailored to your current progress:
+```bash
+voc quiz
+```
+*Note: Use `voc quiz --flashcards` for the traditional offline flashcard mode.*
+
+### 4. Practice Conversation
+Chat with an AI language coach who will correct your mistakes as you go:
+```bash
+voc convo
+```
+This mode uses a "messaging app" style interface with speech bubbles and a dedicated area for grammatical feedback.
+
+### 5. Review Words
 List all saved words:
 ```bash
 voc list
-```
-
-### 4. Quiz Yourself
-Start a quiz session:
-```bash
-voc quiz
 ```
 
 ## Licensing

@@ -7,7 +7,7 @@ import (
 )
 
 func addWordToDB(word string) (bool, error) {
-	exists, err := db.WordExists(word)
+	exists, err := vocApp.DB.WordExists(word)
 	if err != nil {
 		return false, fmt.Errorf("database error: %v", err)
 	}
@@ -19,8 +19,8 @@ func addWordToDB(word string) (bool, error) {
 	wordTypes := []database.WordType{}
 	incomplete := true
 
-	if dict != nil {
-		data, err := dict.Lookup(word)
+	if vocApp.Dict != nil {
+		data, err := vocApp.Dict.Lookup(word)
 		if err != nil {
 			return false, fmt.Errorf("Err: %v", err)
 		}
@@ -41,7 +41,7 @@ func addWordToDB(word string) (bool, error) {
 		return false, fmt.Errorf("%s", i18n.T(i18n.ErrWordNotFound))
 	}
 
-	if err := db.AddWord(word, wordTypes, incomplete); err != nil {
+	if err := vocApp.DB.AddWord(word, wordTypes, incomplete); err != nil {
 		return false, fmt.Errorf("Err: %v", err)
 	}
 

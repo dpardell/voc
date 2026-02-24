@@ -54,7 +54,7 @@ var installDictCmd = &cobra.Command{
 			fmt.Printf("Err: %v\n", err)
 			return
 		}
-		if err := importer.DownloadAndImport(force, url); err != nil {
+		if err := importer.DownloadAndImport(cmd.Context(), force, url); err != nil {
 			fmt.Printf("Err: %v\n", err)
 		}
 	},
