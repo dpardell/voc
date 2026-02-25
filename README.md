@@ -68,7 +68,7 @@ Voc uses environment variables for runtime configuration. You can also use a `se
 
 Voc supports multiple languages for both the interface and the learning target.
 
-- **Interface (Host Language)**: English (`en`), French (`fr`), Czech (`cs`), Slovak (`sk`), Spanish (`es`), and German (`de`) are currently supported.
+- **Interface (Host Language)**: English (`en`), French (`fr`), Czech (`cs`), Slovak (`sk`), Spanish (`es`), German (`de`), Portuguese (`pt`), and Brazilian Portuguese (`pt-br`) are currently supported.
 - **Learning (Target Language)**: Any language available on [Kaikki.org](https://kaikki.org) can be installed (French, Spanish, German, etc.).
 
 To start Voc with specific languages:
