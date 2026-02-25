@@ -2,7 +2,6 @@ package i18n
 
 import (
 	"fmt"
-	"os"
 )
 
 type StringID string
@@ -36,6 +35,41 @@ const (
 	QuizWrong              StringID = "QuizWrong"
 	QuizCompleted          StringID = "QuizCompleted"
 	HintsQuiz              StringID = "HintsQuiz"
+	// New Strings
+	ConvoPlaceholder  StringID = "ConvoPlaceholder"
+	ConvoStarted      StringID = "ConvoStarted"
+	ConvoCorrections  StringID = "ConvoCorrections"
+	ConvoThinking     StringID = "ConvoThinking"
+	ConvoError        StringID = "ConvoError"
+	ConvoExitHint     StringID = "ConvoExitHint"
+	ConvoCoachTitle   StringID = "ConvoCoachTitle"
+	QuizPlaceholder   StringID = "QuizPlaceholder"
+	PressEnterToCont  StringID = "PressEnterToCont"
+	ErrorNoWords      StringID = "ErrorNoWords"
+	DictionaryLoading StringID = "DictionaryLoading"
+	// Splash screen
+	SplashTagline StringID = "SplashTagline"
+	MenuSearch    StringID = "MenuSearch"
+	MenuQuiz      StringID = "MenuQuiz"
+	MenuConvo     StringID = "MenuConvo"
+	MenuVocab     StringID = "MenuVocab"
+	MenuQuit      StringID = "MenuQuit"
+	SplashFooter  StringID = "SplashFooter"
+	// Import/Export
+	ImportComplete StringID = "ImportComplete"
+	ImportUsage    StringID = "ImportUsage"
+	ExportSuccess  StringID = "ExportSuccess"
+	// Quiz states
+	QuizGenerating StringID = "QuizGenerating"
+	QuizUpdating   StringID = "QuizUpdating"
+	QuizHintType   StringID = "QuizHintType"
+	// CLI extra strings
+	FlashcardsWelcome StringID = "FlashcardsWelcome"
+	FlashcardsPress   StringID = "FlashcardsPress"
+	FlashcardsNext    StringID = "FlashcardsNext"
+	FlashcardsEnd     StringID = "FlashcardsEnd"
+	DailySayingPrompt StringID = "DailySayingPrompt"
+	NoWordsToQuiz     StringID = "NoWordsToQuiz"
 )
 
 var en = map[StringID]string{
@@ -67,6 +101,36 @@ var en = map[StringID]string{
 	QuizWrong:              "WRONG! The correct answer was: %s",
 	QuizCompleted:          "Quiz completed! Final Score: %d/%d",
 	HintsQuiz:              "Enter: Submit/Next • Ctrl-C: Quit",
+	ConvoPlaceholder:       "Say something in your target language...",
+	ConvoStarted:           "Chat started! Say hi!",
+	ConvoCorrections:       "Corrections:",
+	ConvoThinking:          "Thinking...",
+	ConvoError:             "ERROR",
+	ConvoExitHint:          "Press Ctrl+C to exit",
+	ConvoCoachTitle:        "LANGUAGE COACH",
+	QuizPlaceholder:        "Type your answer...",
+	PressEnterToCont:       "Press Enter to continue...",
+	ErrorNoWords:           "Not enough words to generate a quiz. Add more words first!",
+	DictionaryLoading:      "Dictionary not loaded",
+	SplashTagline:          "Your AI-Powered Language Companion",
+	MenuSearch:             "SEARCH DICTIONARY",
+	MenuQuiz:               "VOCABULARY QUIZ",
+	MenuConvo:              "LANGUAGE COACH",
+	MenuVocab:              "MY VOCABULARY",
+	MenuQuit:               "QUIT",
+	SplashFooter:           "↑/↓: navigate • enter: select • q: quit",
+	ImportComplete:         "Import complete: %d added, %d skipped",
+	ImportUsage:            "Usage: voc import -f <file> OR pipe input",
+	ExportSuccess:          "Exported %d words to %s",
+	QuizGenerating:         "Generating quiz...",
+	QuizUpdating:           "Updating progress...",
+	QuizHintType:           "Type your answer and press Enter",
+	FlashcardsWelcome:      "Flashcards mode - Press Enter to see definition, Ctrl+C to exit",
+	FlashcardsPress:        "Press Enter to see definition... ",
+	FlashcardsNext:         "Press Enter for next word... ",
+	FlashcardsEnd:          "Quiz ended.",
+	DailySayingPrompt:      "Welcome back! (Set VERTEX_API_KEY/PROJECT_ID for daily sayings)",
+	NoWordsToQuiz:          "No words to quiz.",
 }
 
 var fr = map[StringID]string{
@@ -98,9 +162,40 @@ var fr = map[StringID]string{
 	QuizWrong:              "MAUVAIS ! La bonne réponse était : %s",
 	QuizCompleted:          "Quiz terminé ! Score final : %d/%d",
 	HintsQuiz:              "Entrée : Valider/Suivant • Ctrl-C : Quitter",
+	ConvoPlaceholder:       "Dites quelque chose dans votre langue cible...",
+	ConvoStarted:           "Chat commencé ! Dites bonjour !",
+	ConvoCorrections:       "Corrections :",
+	ConvoThinking:          "Réflexion...",
+	ConvoError:             "ERREUR",
+	ConvoExitHint:          "Appuyez sur Ctrl+C pour quitter",
+	ConvoCoachTitle:        "COACH LINGUISTIQUE",
+	QuizPlaceholder:        "Tapez votre réponse...",
+	PressEnterToCont:       "Appuyez sur Entrée pour continuer...",
+	ErrorNoWords:           "Pas assez de mots pour générer un quiz. Ajoutez plus de mots d'abord !",
+	DictionaryLoading:      "Dictionnaire non chargé",
+	SplashTagline:          "Votre compagnon linguistique propulsé par l'IA",
+	MenuSearch:             "RECHERCHER DANS LE DICTIONNAIRE",
+	MenuQuiz:               "QUIZ DE VOCABULAIRE",
+	MenuConvo:              "COACH LINGUISTIQUE",
+	MenuVocab:              "MON VOCABULAIRE",
+	MenuQuit:               "QUITTER",
+	SplashFooter:           "↑/↓: naviguer • entrée: sélectionner • q: quitter",
+	ImportComplete:         "Importation terminée : %d ajouté(s), %d ignoré(s)",
+	ImportUsage:            "Utilisation : voc import -f <fichier> OU pipe entrée",
+	ExportSuccess:          "Exportation de %d mots vers %s",
+	QuizGenerating:         "Génération du quiz...",
+	QuizUpdating:           "Mise à jour de la progression...",
+	QuizHintType:           "Tapez votre réponse et appuyez sur Entrée",
+	FlashcardsWelcome:      "Mode Flashcards - Appuyez sur Entrée pour voir la définition, Ctrl+C pour quitter",
+	FlashcardsPress:        "Appuyez sur Entrée pour voir la définition... ",
+	FlashcardsNext:         "Appuyez sur Entrée pour le mot suivant... ",
+	FlashcardsEnd:          "Quiz terminé.",
+	DailySayingPrompt:      "Bon retour ! (Configurez VERTEX_API_KEY/PROJECT_ID pour les dictons quotidiens)",
+	NoWordsToQuiz:          "Aucun mot pour le quiz.",
 }
 
-var activeLocale = "en"
+var activeHostLang = "en"
+var activeTargetLang = "fr"
 
 var locales = map[string]map[StringID]string{
 	"en": en,
@@ -108,27 +203,42 @@ var locales = map[string]map[StringID]string{
 }
 
 func init() {
-	lang := os.Getenv("VOC_LANG")
-	if lang == "" {
-		lang = os.Getenv("LANG")
-	}
-	if len(lang) >= 2 {
-		SetLanguage(lang[:2])
-	}
+	// Defaults will be overridden by config loading in internal/app
 }
 
-func SetLanguage(lang string) {
+func SetHostLanguage(lang string) {
 	if _, ok := locales[lang]; ok {
-		activeLocale = lang
+		activeHostLang = lang
 	}
 }
 
-func GetLanguage() string {
-	return activeLocale
+func SetTargetLanguage(lang string) {
+	activeTargetLang = lang
+}
+
+func GetHostLanguage() string {
+	return activeHostLang
+}
+
+func GetTargetLanguage() string {
+	return activeTargetLang
+}
+
+func GetLanguageName(lang string) string {
+	names := map[string]string{
+		"en": "English",
+		"fr": "Français",
+		"cs": "Čeština",
+		"sk": "Slovenčina",
+	}
+	if name, ok := names[lang]; ok {
+		return name
+	}
+	return lang
 }
 
 func T(id StringID, args ...any) string {
-	translations, ok := locales[activeLocale]
+	translations, ok := locales[activeHostLang]
 	if !ok {
 		translations = en
 	}

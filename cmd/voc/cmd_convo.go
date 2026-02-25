@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"voc/internal/database"
+	"voc/internal/i18n"
 	"voc/internal/ui"
 
 	"github.com/spf13/cobra"
@@ -36,7 +37,7 @@ var convoCmd = &cobra.Command{
 
 		if err := ui.RunConvo(client, progress); err != nil {
 			fmt.Printf("Error running conversation: %v\n", err)
-			fmt.Println("\nPress Enter to continue...")
+			fmt.Println("\n" + i18n.T(i18n.PressEnterToCont))
 			var discard string
 			fmt.Scanln(&discard)
 		}

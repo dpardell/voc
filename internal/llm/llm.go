@@ -98,19 +98,22 @@ func (c *Client) generateWithRetry(ctx context.Context, model *genai.GenerativeM
 	return nil, err
 }
 
-func (c *Client) GenerateQuiz(ctx context.Context, words []string, progress string) ([]Question, error) {
+func (c *Client) GenerateQuiz(ctx context.Context, words []string, progress string, hostLang, targetLang string) ([]Question, error) {
 	prompt := fmt.Sprintf(`
 You are a language teacher creating an interactive vocabulary quiz.
 Generate a quiz for the following target words: %s.
+
+Host Language (Learner's native/UI language): %s
+Target Language (Language being learned): %s
 
 Current learner progress:
 %s
 
 Instructions:
 1. Include two types of questions: "multiple_choice" and "fill_in_the_blank".
-2. Ensure a mix of questions. Some should be translation-based (English to target language or vice versa), 
-   while others should be entirely in the target language (e.g., fill in the blank in a sentence, 
-   choosing the correct conjugation, or matching a target-language definition to a word).
+2. Ensure a mix of questions. Some should be translation-based (%s to %s or vice versa), 
+   while others should be entirely in %s (e.g., fill in the blank in a sentence, 
+   choosing the correct conjugation, or matching a %s definition to a word).
 3. "multiple_choice" questions should have:
    - "question": The question text.
    - "options": An array of 4 possible answers.
@@ -126,7 +129,7 @@ Instructions:
 
 Focus on variety and challenge, using the learner's progress to inform the difficulty level and which words to prioritize.
 Return ONLY a valid JSON array of these question objects. No preamble or markdown formatting.
-`, strings.Join(words, ", "), progress)
+`, strings.Join(words, ", "), hostLang, targetLang, progress, hostLang, targetLang, targetLang, targetLang)
 
 	resp, err := c.generateWithRetry(ctx, c.model, prompt)
 	if err != nil {
@@ -249,7 +252,7 @@ Keep it under 3 lines.
 	return string(text), nil
 }
 
-func (c *Client) Chat(ctx context.Context, progress string, history []Message, userMessage string) (*ChatResponse, []Message, error) {
+func (c *Client) Chat(ctx context.Context, progress string, history []Message, userMessage string, hostLang, targetLang string) (*ChatResponse, []Message, error) {
 	// Use gemini-2.0-flash for potentially better stability and speed
 	chatModel := c.client.GenerativeModel(c.modelName)
 	chatModel.ResponseMIMEType = "application/json"
@@ -260,17 +263,18 @@ You are a professional language coach.
 Learner Progress: %s
 
 TASK:
-Converse with the user in their target language. 
+Converse with the user in %s. 
 Provide helpful grammar and spelling corrections for ONLY the user's very last message in the "corrections" field. 
+Explain any major mistakes or corrections briefly in %s.
 
 CRITICAL RULES:
 - You MUST return a JSON object. 
 - Do NOT return plain text. 
-- The "response" field must contain your reply in the target language.
+- The "response" field must contain your reply in %s.
 - The "corrections" field MUST be an array of objects, each with "incorrect" and "correct" keys.
   Example: [{"incorrect": "Slaut", "correct": "Salut"}]
 - If there are no corrections needed, leave the "corrections" array empty: [].
-`, progress))},
+`, progress, targetLang, hostLang, targetLang))},
 	}
 
 	session := chatModel.StartChat()

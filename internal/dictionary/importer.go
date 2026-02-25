@@ -68,12 +68,26 @@ func (i *Importer) DownloadAndImport(ctx context.Context, force bool, url string
 		return fmt.Errorf("download failed with status: %s", resp.Status)
 	}
 
-	fmt.Println("Decompressing and saving...")
-	gzReader, err := gzip.NewReader(resp.Body)
-	if err != nil {
-		return err
+	// Use a buffered reader to peek at the magic bytes
+	reader := bufio.NewReader(resp.Body)
+	isGzip := false
+	peek, err := reader.Peek(2)
+	if err == nil && peek[0] == 0x1f && peek[1] == 0x8b {
+		isGzip = true
 	}
-	defer gzReader.Close()
+
+	var finalReader io.Reader = reader
+	if isGzip {
+		fmt.Println("Decompressing and saving...")
+		gzReader, err := gzip.NewReader(reader)
+		if err != nil {
+			return err
+		}
+		defer gzReader.Close()
+		finalReader = gzReader
+	} else {
+		fmt.Println("Saving...")
+	}
 
 	outFile, err := os.Create(i.CacheFile)
 	if err != nil {
@@ -81,7 +95,7 @@ func (i *Importer) DownloadAndImport(ctx context.Context, force bool, url string
 	}
 	defer outFile.Close()
 
-	_, err = io.Copy(outFile, gzReader)
+	_, err = io.Copy(outFile, finalReader)
 	if err != nil {
 		return err
 	}

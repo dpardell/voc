@@ -18,11 +18,17 @@ func init() {
 
 var installDictCmd = &cobra.Command{
 	Use:   "install-dict",
-	Short: "Download and install the French dictionary",
+	Short: "Download and install the dictionary for the target language",
 	Run: func(cmd *cobra.Command, args []string) {
 		force, _ := cmd.Flags().GetBool("force")
 
 		url := dictionary.KaikkiURL
+		if vocApp.Settings != nil && vocApp.Settings.Dictionaries != nil {
+			if dURL, ok := vocApp.Settings.Dictionaries[vocApp.TargetLang]; ok {
+				url = dURL
+			}
+		}
+
 		reader := bufio.NewReader(os.Stdin)
 
 		for {
@@ -49,7 +55,7 @@ var installDictCmd = &cobra.Command{
 			}
 		}
 
-		importer, err := dictionary.NewImporter(i18n.GetLanguage())
+		importer, err := dictionary.NewImporter(vocApp.TargetLang)
 		if err != nil {
 			fmt.Printf("Err: %v\n", err)
 			return

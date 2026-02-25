@@ -45,12 +45,14 @@ type quizModel struct {
 
 	// Results for the caller
 	finalProgress string
+	hostLang      string
+	targetLang    string
 }
 
 func InitialQuizModel(client *llm.Client, targetWords []string, progress string) quizModel {
 	InitStyles()
 	ti := textinput.New()
-	ti.Placeholder = "Type your answer..."
+	ti.Placeholder = i18n.T(i18n.QuizPlaceholder)
 	ti.CharLimit = 156
 	ti.Width = 30
 
@@ -65,6 +67,8 @@ func InitialQuizModel(client *llm.Client, targetWords []string, progress string)
 		selected:    -1,
 		textInput:   ti,
 		spinner:     s,
+		hostLang:    i18n.GetLanguageName(i18n.GetHostLanguage()),
+		targetLang:  i18n.GetLanguageName(i18n.GetTargetLanguage()),
 	}
 }
 
@@ -75,7 +79,7 @@ type errMsg error
 
 func (m quizModel) generateQuestions() tea.Cmd {
 	return func() tea.Msg {
-		questions, err := m.client.GenerateQuiz(m.ctx, m.targetWords, m.progress)
+		questions, err := m.client.GenerateQuiz(m.ctx, m.targetWords, m.progress, m.hostLang, m.targetLang)
 		if err != nil {
 			return errMsg(err)
 		}
@@ -229,11 +233,11 @@ func (m quizModel) View() string {
 	}
 
 	if m.state == stateGenerating {
-		return fmt.Sprintf("\n%s\n\n%s %s", title, m.spinner.View(), "Generating quiz...")
+		return fmt.Sprintf("\n%s\n\n%s %s", title, m.spinner.View(), i18n.T(i18n.QuizGenerating))
 	}
 
 	if m.state == stateUpdating {
-		return fmt.Sprintf("\n%s\n\n%s %s", title, m.spinner.View(), "Updating progress...")
+		return fmt.Sprintf("\n%s\n\n%s %s", title, m.spinner.View(), i18n.T(i18n.QuizUpdating))
 	}
 	
 	if m.state == stateFinished {
@@ -291,7 +295,7 @@ func (m quizModel) View() string {
 
 	hints := hintStyle.Render(i18n.T(i18n.HintsQuiz))
 	if q.Type == "fill_in_the_blank" && m.state == stateAnswering {
-		hints = hintStyle.Render("Type your answer and press Enter")
+		hints = hintStyle.Render(i18n.T(i18n.QuizHintType))
 	}
 
 	return fmt.Sprintf("\n%s %s\n%s\n%s\n\n%s\n%s\n\n%s", title, score, header, questionText, optionsView, feedback, hints)

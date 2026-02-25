@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"voc/internal/database"
+	"voc/internal/i18n"
 	"voc/internal/ui"
 
 	"github.com/spf13/cobra"
@@ -41,7 +42,7 @@ func runAIQuiz(ctx context.Context) {
 		fmt.Printf("Error: %v\n", err)
 		fmt.Println("Please set VERTEX_API_KEY and VERTEX_PROJECT_ID.")
 		fmt.Println("Or use --flashcards for offline mode.")
-		fmt.Println("\nPress Enter to continue...")
+		fmt.Println("\n" + i18n.T(i18n.PressEnterToCont))
 		bufio.NewScanner(os.Stdin).Scan()
 		return
 	}
@@ -61,8 +62,8 @@ func runAIQuiz(ctx context.Context) {
 	}
 
 	if len(words) < 4 {
-		fmt.Println("Not enough words to generate a quiz. Add more words first!")
-		fmt.Println("\nPress Enter to continue...")
+		fmt.Println(i18n.T(i18n.ErrorNoWords))
+		fmt.Println("\n" + i18n.T(i18n.PressEnterToCont))
 		bufio.NewScanner(os.Stdin).Scan()
 		return
 	}
@@ -95,13 +96,13 @@ func runFlashcards() {
 	}
 
 	if len(words) == 0 {
-		fmt.Println("No words to quiz.")
+		fmt.Println(i18n.T(i18n.NoWordsToQuiz))
 		return
 	}
 
 	perm := rand.Perm(len(words))
 
-	fmt.Println("Flashcards mode - Press Enter to see definition, Ctrl+C to exit")
+	fmt.Println(i18n.T(i18n.FlashcardsWelcome))
 	fmt.Println()
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -120,7 +121,7 @@ func runFlashcards() {
 		t := fullWord.Types[typeIdx]
 
 		fmt.Printf("Word: %s (%s)\n", fullWord.Word, t.Type)
-		fmt.Print("Press Enter to see definition... ")
+		fmt.Print(i18n.T(i18n.FlashcardsPress))
 		scanner.Scan()
 
 		fmt.Println("Definition:")
@@ -128,9 +129,9 @@ func runFlashcards() {
 			fmt.Printf("  - %s\n", d)
 		}
 		fmt.Println()
-		fmt.Print("Press Enter for next word... ")
+		fmt.Print(i18n.T(i18n.FlashcardsNext))
 		scanner.Scan()
 		fmt.Println()
 	}
-	fmt.Println("Quiz ended.")
+	fmt.Println(i18n.T(i18n.FlashcardsEnd))
 }

@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"os"
+	"voc/internal/config"
 	"voc/internal/database"
 	"voc/internal/dictionary"
 	"voc/internal/i18n"
@@ -10,23 +11,44 @@ import (
 )
 
 type App struct {
-	DB   *database.Database
-	Dict *dictionary.Dictionary
-	Lang string
+	DB         *database.Database
+	Dict       *dictionary.Dictionary
+	HostLang   string
+	TargetLang string
+	Settings   *config.Settings
 }
 
-func NewApp(lang string) (*App, error) {
+func NewApp(hostLang, targetLang string) (*App, error) {
+	settings, err := config.Load()
+	if err != nil {
+		// Just log error and continue with defaults
+		fmt.Printf("Warning: failed to load settings: %v\n", err)
+	}
+
+	// 3. CLI flags override (passed in)
+	if hostLang != "" {
+		settings.HostLang = hostLang
+	}
+	if targetLang != "" {
+		settings.TargetLang = targetLang
+	}
+
+	i18n.SetHostLanguage(settings.HostLang)
+	i18n.SetTargetLanguage(settings.TargetLang)
+
 	db, err := database.New()
 	if err != nil {
 		return nil, fmt.Errorf("%s: %v", i18n.T(i18n.ErrDatabase), err)
 	}
 
-	dict, _ := dictionary.New(lang)
+	dict, _ := dictionary.New(settings.TargetLang)
 
 	return &App{
-		DB:   db,
-		Dict: dict,
-		Lang: lang,
+		DB:         db,
+		Dict:       dict,
+		HostLang:   settings.HostLang,
+		TargetLang: settings.TargetLang,
+		Settings:   settings,
 	}, nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"voc/internal/i18n"
 
 	"github.com/spf13/cobra"
 )
@@ -35,7 +36,7 @@ var exportCmd = &cobra.Command{
 			if err != nil {
 				fmt.Printf("Error writing file: %v\n", err)
 			} else {
-				fmt.Printf("Exported %d words to %s\n", len(words), filePath)
+				fmt.Println(i18n.T(i18n.ExportSuccess, len(words), filePath))
 			}
 		} else {
 			fmt.Println(output)

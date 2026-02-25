@@ -25,7 +25,7 @@ var listCmd = &cobra.Command{
 		}
 
 		if len(words) == 0 {
-			fmt.Println("No words in dictionary.")
+			fmt.Println(i18n.T(i18n.NoMatches))
 			return
 		}
 
@@ -50,7 +50,7 @@ var listCmd = &cobra.Command{
 
 		defFunc := func(w string) (string, error) {
 			if vocApp.Dict == nil {
-				return "", fmt.Errorf("dictionary not loaded")
+				return "", fmt.Errorf("%s", i18n.T(i18n.DictionaryLoading))
 			}
 			return vocApp.Dict.Definition(w)
 		}
@@ -74,7 +74,7 @@ var listCmd = &cobra.Command{
 
 			// Add back to vocab
 			if vocApp.Dict == nil {
-				return false, fmt.Errorf("dictionary not loaded")
+				return false, fmt.Errorf("%s", i18n.T(i18n.DictionaryLoading))
 			}
 			defData, err := vocApp.Dict.Lookup(word)
 			if err != nil {

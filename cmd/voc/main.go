@@ -16,6 +16,8 @@ import (
 )
 
 var vocApp *app.App
+var hostLangFlag string
+var targetLangFlag string
 
 var rootCmd = &cobra.Command{
 	Use:   "voc",
@@ -24,7 +26,7 @@ var rootCmd = &cobra.Command{
 and helps you review with interactive quizzes.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		var err error
-		vocApp, err = app.NewApp(i18n.GetLanguage())
+		vocApp, err = app.NewApp(hostLangFlag, targetLangFlag)
 		return err
 	},
 	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
@@ -43,6 +45,11 @@ and helps you review with interactive quizzes.`,
 			cmd.Help()
 		}
 	},
+}
+
+func init() {
+	rootCmd.PersistentFlags().StringVar(&hostLangFlag, "host-lang", "", "UI language (en, fr)")
+	rootCmd.PersistentFlags().StringVar(&targetLangFlag, "target-lang", "", "Language you are learning (fr, es, etc.)")
 }
 
 type DailySaying struct {
@@ -66,13 +73,13 @@ func getDailySaying(ctx context.Context) string {
 	// Generate new saying
 	client, err := vocApp.GetLLMClient()
 	if err != nil {
-		return "Welcome back! (Set VERTEX_API_KEY/PROJECT_ID for daily sayings)"
+		return i18n.T(i18n.DailySayingPrompt)
 	}
 	defer client.Close()
 
 	progress, _ := database.GetProgress()
 
-	saying, err := client.GenerateDailySaying(ctx, vocApp.Lang, progress)
+	saying, err := client.GenerateDailySaying(ctx, vocApp.TargetLang, progress)
 	if err != nil {
 		return "Time to learn some new words!"
 	}

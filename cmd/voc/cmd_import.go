@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"voc/internal/i18n"
 
 	"github.com/spf13/cobra"
 )
@@ -44,7 +45,7 @@ var importCmd = &cobra.Command{
 					// Try args just in case
 					input = strings.Join(args, ",")
 				} else {
-					fmt.Println("Usage: voc import -f <file> OR pipe input")
+					fmt.Println(i18n.T(i18n.ImportUsage))
 					return
 				}
 			}
@@ -72,6 +73,6 @@ var importCmd = &cobra.Command{
 				skipped++
 			}
 		}
-		fmt.Printf("Import complete: %d added, %d skipped\n", count, skipped)
+		fmt.Println(i18n.T(i18n.ImportComplete, count, skipped))
 	},
 }

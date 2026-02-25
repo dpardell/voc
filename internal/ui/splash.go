@@ -3,6 +3,8 @@ package ui
 import (
 	"strings"
 
+	"voc/internal/i18n"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -17,12 +19,14 @@ const (
 	OptionQuit
 )
 
-var menuLabels = map[MenuOption]string{
-	OptionSearch: "SEARCH DICTIONARY",
-	OptionQuiz:   "VOCABULARY QUIZ",
-	OptionConvo:  "LANGUAGE COACH",
-	OptionList:   "MY VOCABULARY",
-	OptionQuit:   "QUIT",
+func getMenuLabels() map[MenuOption]string {
+	return map[MenuOption]string{
+		OptionSearch: i18n.T(i18n.MenuSearch),
+		OptionQuiz:   i18n.T(i18n.MenuQuiz),
+		OptionConvo:  i18n.T(i18n.MenuConvo),
+		OptionList:   i18n.T(i18n.MenuVocab),
+		OptionQuit:   i18n.T(i18n.MenuQuit),
+	}
 }
 
 type splashModel struct {
@@ -104,7 +108,7 @@ func (m splashModel) View() string {
 		Foreground(lipgloss.Color("241")).
 		Italic(true).
 		MarginBottom(2).
-		Render("Your AI-Powered Language Companion")
+		Render(i18n.T(i18n.SplashTagline))
 
 	// Saying Card
 	sayingCard := lipgloss.NewStyle().
@@ -118,8 +122,9 @@ func (m splashModel) View() string {
 
 	// Menu
 	var menu strings.Builder
+	labels := getMenuLabels()
 	for i := OptionSearch; i <= OptionQuit; i++ {
-		label := menuLabels[i]
+		label := labels[i]
 		
 		icon := "  "
 		switch i {
@@ -145,7 +150,7 @@ func (m splashModel) View() string {
 	footer := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("240")).
 		MarginTop(2).
-		Render("↑/↓: navigate • enter: select • q: quit")
+		Render(i18n.T(i18n.SplashFooter))
 
 	content := lipgloss.JoinVertical(lipgloss.Center,
 		logoStyle.Render(logo),

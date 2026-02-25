@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"voc/internal/i18n"
 	"voc/internal/llm"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -45,12 +46,14 @@ type convoModel struct {
 	width        int
 	height       int
 	err          error
+	hostLang     string
+	targetLang   string
 }
 
 func InitialConvoModel(client *llm.Client, progress string) convoModel {
 	InitStyles()
 	ti := textinput.New()
-	ti.Placeholder = "Say something in your target language..."
+	ti.Placeholder = i18n.T(i18n.ConvoPlaceholder)
 	ti.Focus()
 	ti.CharLimit = 256
 	ti.Width = 60
@@ -58,10 +61,12 @@ func InitialConvoModel(client *llm.Client, progress string) convoModel {
 	s := GetSpinner()
 
 	return convoModel{
-		client:    client,
-		progress:  progress,
-		textInput: ti,
-		spinner:   s,
+		client:     client,
+		progress:   progress,
+		textInput:  ti,
+		spinner:    s,
+		hostLang:   i18n.GetLanguageName(i18n.GetHostLanguage()),
+		targetLang: i18n.GetLanguageName(i18n.GetTargetLanguage()),
 	}
 }
 
@@ -78,7 +83,7 @@ type chatMsg struct {
 func (m convoModel) sendMessage() tea.Cmd {
 	return func() tea.Msg {
 		msg := m.textInput.Value()
-		res, history, err := m.client.Chat(context.Background(), m.progress, m.history, msg)
+		res, history, err := m.client.Chat(context.Background(), m.progress, m.history, msg, m.hostLang, m.targetLang)
 		return chatMsg{response: res, history: history, err: err}
 	}
 }
@@ -99,7 +104,7 @@ func (m convoModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport = viewport.New(msg.Width, msg.Height-9)
 		m.textInput.Width = msg.Width - 10
 		if len(m.history) == 0 {
-			m.viewport.SetContent("Chat started! Say hi!")
+			m.viewport.SetContent(i18n.T(i18n.ConvoStarted))
 		} else {
 			m.viewport.SetContent(m.renderHistory())
 		}
@@ -164,7 +169,7 @@ func (m convoModel) renderHistory() string {
 			// If this is the latest user message and we have corrections, show them here
 			if i == len(m.history)-2 && len(m.lastCorr) > 0 {
 				var corrBuilder strings.Builder
-				corrBuilder.WriteString("Corrections:\n")
+				corrBuilder.WriteString(i18n.T(i18n.ConvoCorrections) + "\n")
 				for _, c := range m.lastCorr {
 					corrBuilder.WriteString(fmt.Sprintf("• %s → %s\n", c.Incorrect, c.Correct))
 				}
@@ -195,19 +200,19 @@ func (m convoModel) View() string {
 			Width(m.width - 4).
 			Padding(1, 2)
 		return fmt.Sprintf("\n%s\n\n%s\n\n%s", 
-			titleStyle.Render("ERROR"),
+			titleStyle.Render(i18n.T(i18n.ConvoError)),
 			errStyle.Render(m.err.Error()),
-			hintStyle.Render("Press Ctrl+C to exit"))
+			hintStyle.Render(i18n.T(i18n.ConvoExitHint)))
 	}
 
-	title := titleStyle.Render("LANGUAGE COACH")
+	title := titleStyle.Render(i18n.T(i18n.ConvoCoachTitle))
 	history := m.viewport.View()
 	
 	// Stabilize input area height
 	inputAreaHeight := 3
 	var inputContent string
 	if m.loading {
-		inputContent = m.spinner.View() + " Thinking..."
+		inputContent = m.spinner.View() + " " + i18n.T(i18n.ConvoThinking)
 	} else {
 		inputContent = m.textInput.View()
 	}
