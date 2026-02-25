@@ -5,17 +5,27 @@ import (
 )
 
 func TestTranslations(t *testing.T) {
-	// Verify that all keys in 'en' are also in 'fr'
-	for key := range en {
-		if _, ok := fr[key]; !ok {
-			t.Errorf("Key %s missing in French translations", key)
+	langs := []string{"en", "fr", "cs", "sk"}
+	
+	for _, lang := range langs {
+		locale, ok := locales[lang]
+		if !ok {
+			t.Errorf("Locale %s not found in locales map", lang)
+			continue
 		}
-	}
 
-	// Verify that all keys in 'fr' are also in 'en'
-	for key := range fr {
-		if _, ok := en[key]; !ok {
-			t.Errorf("Key %s missing in English translations", key)
+		// Check against 'en' as the reference
+		for key := range en {
+			if _, ok := locale[key]; !ok {
+				t.Errorf("Key %s missing in %s translations", key, lang)
+			}
+		}
+
+		// Check for extra keys in locale
+		for key := range locale {
+			if _, ok := en[key]; !ok {
+				t.Errorf("Extra key %s found in %s translations", key, lang)
+			}
 		}
 	}
 }
