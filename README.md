@@ -14,10 +14,11 @@ are defintely welcome. Long term, I would like for this project to head in the d
 
 ## Features
 
+- **Interactive Hub**: A central splash screen to access all features, view daily AI-powered sayings, and manage installations.
 - **Dictionary Search**: Interactive, real-time search in local dictionary with text indexing.
 - **Personal Vocabulary**: Save words to your personal vocabulary.
 - **AI-Powered Learning**:
-  - **Interactive Quiz**: Test your knowledge with a mix of multiple-choice and fill-in-the-blank questions.
+  - **Interactive Quiz**: Test your knowledge with AI-generated questions tailored to your vocabulary.
   - **Language Coach (`voc convo`)**: Chat with a friendly AI coach that provides real-time grammar and stylistic corrections.
   - **Progress Tracking**: A persistent `progress.md` file keeps a high-level overview of your grammar competency and vocabulary range.
 - **Multi-language UI**: Support for different languages in the interface (currently English and French).
@@ -46,74 +47,76 @@ Requirements: Go 1.25+
     ```bash
     make install PREFIX=/usr/local
     ```
-    Or override specific directories:
-    ```bash
-    make install bindir=/opt/voc/bin datadir=/opt/voc/data
-    ```
 
 ### Configuration
 
-Voc uses these locations by default (set at build time), but you can override them at runtime using environment variables:
+Voc uses environment variables for runtime configuration. You can also use a `settings.yaml` file in your user config directory.
 
-- `GEMINI_API_KEY`: **Required for AI features.** Your Google Gemini API key.
-- `VOC_DB_PATH`: Path to the dictionary database (e.g., `dictionary.db` or `dictionary_fr.db`).
-- `VOC_USER_DB_PATH`: Path to your personal word collection database (default: `$(datadir)/voc.db`).
-- `VOC_LANG`: Set the interface and dictionary language (e.g., `fr`). If unset, it attempts to detect from your `LANG` environment variable.
+- **AI Features (Required for Quiz/Convo)**:
+  - `VERTEX_API_KEY`: Your Google Vertex AI/Gemini API key (falls back to `GEMINI_API_KEY`).
+  - `VERTEX_PROJECT_ID`: **Required.** Your Google Cloud Project ID.
+  - `VERTEX_LOCATION`: Google Cloud Region (default: `us-central1`).
+  - `VERTEX_MODEL`: The model ID to use (default: `gemini-2.5-flash-lite`).
+
+- **Application Settings**:
+  - `VOC_HOST_LANG`: The language of the UI (e.g., `en`, `fr`).
+  - `VOC_TARGET_LANG`: The language you are learning (e.g., `fr`, `es`, `de`).
+  - `VOC_DB_PATH`: Path to the dictionary database.
+  - `VOC_USER_DB_PATH`: Path to your personal word collection database.
 
 ## Languages
 
-Voc currently supports the following languages:
+Voc supports multiple languages for both the interface and the learning target.
 
-- **English** (en): Default interface language.
-- **French** (fr): Interface and dictionary support.
+- **Interface (Host Language)**: English (`en`) and French (`fr`) are currently supported.
+- **Learning (Target Language)**: Any language available on [Kaikki.org](https://kaikki.org) can be installed (French, Spanish, German, etc.).
 
-To switch to French:
+To start Voc with specific languages:
 ```bash
-export VOC_LANG=fr
-voc search
+# UI in English, learning French
+voc -l en -t fr
 ```
-Only French is supported as an alternative language at this time.
 
 ## Usage
 
-### 1. Initialize Dictionary
-First, fetch the latest dictionary data for your language (defaults to French if `VOC_LANG=fr`):
-```bash
-VOC_LANG=fr voc install-dict
-```
+### 1. Interactive Hub
+Simply run `voc` to enter the interactive splash screen. From here, you can access all modules, view a daily AI-powered saying, and install dictionaries if missing.
 
-### 2. Search & Save
+### 2. Initialize Dictionary
+Before searching, install the dictionary for your target language:
+```bash
+# Installs the dictionary for the current target language
+voc install-dict
+```
+You can also do this directly from the "INSTALL DICTIONARY" option on the splash screen.
+
+### 3. Search & Save
 Interactive mode with fuzzy search to find definitions and manage your vocabulary:
 ```bash
 voc search
 ```
 
 **Keybindings**:
-Search results:
 - `Ctrl+P` / `Ctrl+N`: Navigate search results
 - `Enter`: View definition
-
-Definition view:
-- `J` / `K`: Scroll definition
 - `Ctrl+S`: Toggle word in your vocabulary (Save/Remove)
 - `Esc`: Back / Exit
 
-### 3. Quiz Yourself
-Start an AI-powered quiz session tailored to your current progress:
+### 4. Quiz Yourself
+Start an AI-powered quiz session tailored to your saved words:
 ```bash
 voc quiz
 ```
-*Note: Use `voc quiz --flashcards` for the traditional offline flashcard mode.*
+*Note: Use `voc quiz --flashcards` for traditional offline flashcards.*
 
-### 4. Practice Conversation
+### 5. Practice Conversation
 Chat with an AI language coach who will correct your mistakes as you go:
 ```bash
 voc convo
 ```
-This mode uses a "messaging app" style interface with speech bubbles and a dedicated area for grammatical feedback.
 
-### 5. Review Words
-List all saved words:
+### 6. Review Words
+List and search through your saved words:
 ```bash
 voc list
 ```

@@ -13,10 +13,24 @@ import (
 	"path/filepath"
 	"strings"
 
+	"voc/internal/i18n"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var KaikkiURL string
+
+func GetDefaultKaikkiURL(lang string) string {
+	if KaikkiURL != "" {
+		return KaikkiURL
+	}
+
+	// Default to Kaikki.org structure
+	// https://kaikki.org/frwiktionary/Français/kaikki.org-dictionary-Français.jsonl.gz
+	langName := i18n.GetLanguageName(lang)
+	return fmt.Sprintf("https://kaikki.org/%swiktionary/%s/kaikki.org-dictionary-%s.jsonl.gz", 
+		lang, langName, langName)
+}
 
 type Importer struct {
 	DictDir   string

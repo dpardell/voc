@@ -24,48 +24,37 @@ func init() {
 var quizCmd = &cobra.Command{
 	Use:   "quiz",
 	Short: "Interactive quiz mode",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if flashcardsMode {
-			runFlashcards()
-			return
+			return runFlashcards()
 		}
-		runAIQuiz(cmd.Context())
+		return runAIQuiz(cmd.Context())
 	},
 }
 
-func runAIQuiz(ctx context.Context) {
+func runAIQuiz(ctx context.Context) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	client, err := vocApp.GetLLMClient()
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		fmt.Println("Please set VERTEX_API_KEY and VERTEX_PROJECT_ID.")
-		fmt.Println("Or use --flashcards for offline mode.")
-		fmt.Println("\n" + i18n.T(i18n.PressEnterToCont))
-		bufio.NewScanner(os.Stdin).Scan()
-		return
+		return fmt.Errorf("LLM error: %v (Set VERTEX_API_KEY and VERTEX_PROJECT_ID)", err)
 	}
 	defer client.Close()
 
 	progress, err := database.GetProgress()
 	if err != nil {
-		fmt.Printf("Error reading progress: %v\n", err)
-		return
+		return fmt.Errorf("error reading progress: %v", err)
 	}
 
 	// Fetch 10 random words for the quiz
 	words, err := vocApp.DB.GetRandomWords(10)
 	if err != nil {
-		fmt.Printf("Error fetching words: %v\n", err)
-		return
+		return fmt.Errorf("error fetching words: %v", err)
 	}
 
 	if len(words) < 4 {
-		fmt.Println(i18n.T(i18n.ErrorNoWords))
-		fmt.Println("\n" + i18n.T(i18n.PressEnterToCont))
-		bufio.NewScanner(os.Stdin).Scan()
-		return
+		return fmt.Errorf("%s", i18n.T(i18n.ErrorNoWords))
 	}
 
 	var targetWords []string
@@ -75,29 +64,27 @@ func runAIQuiz(ctx context.Context) {
 
 	result, err := ui.RunQuiz(client, targetWords, progress)
 	if err != nil {
-		fmt.Printf("Error running quiz: %v\n", err)
-		return
+		return fmt.Errorf("error running quiz: %v", err)
 	}
 
 	if result != nil && result.NewProgress != "" {
 		progressPath, _ := database.GetProgressPath()
 		if err := os.WriteFile(progressPath, []byte(result.NewProgress), 0644); err != nil {
-			fmt.Printf("Error saving progress file: %v\n", err)
+			return fmt.Errorf("error saving progress file: %v", err)
 		}
 	}
+	return nil
 }
 
 
-func runFlashcards() {
+func runFlashcards() error {
 	words, err := vocApp.DB.GetAllWords()
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return
+		return err
 	}
 
 	if len(words) == 0 {
-		fmt.Println(i18n.T(i18n.NoWordsToQuiz))
-		return
+		return fmt.Errorf("%s", i18n.T(i18n.NoWordsToQuiz))
 	}
 
 	perm := rand.Perm(len(words))
@@ -134,4 +121,5 @@ func runFlashcards() {
 		fmt.Println()
 	}
 	fmt.Println(i18n.T(i18n.FlashcardsEnd))
+	return nil
 }

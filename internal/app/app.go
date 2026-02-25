@@ -59,6 +59,15 @@ func (a *App) Close() error {
 	return nil
 }
 
+func (a *App) ReinitDict() error {
+	dict, err := dictionary.New(a.TargetLang)
+	if err != nil {
+		return err
+	}
+	a.Dict = dict
+	return nil
+}
+
 func (a *App) GetLLMClient() (*llm.Client, error) {
 	apiKey := os.Getenv("VERTEX_API_KEY")
 	if apiKey == "" {

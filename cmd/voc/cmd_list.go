@@ -17,16 +17,14 @@ func init() {
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all saved words",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		words, err := vocApp.DB.GetAllWords()
 		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-			return
+			return err
 		}
 
 		if len(words) == 0 {
-			fmt.Println(i18n.T(i18n.NoMatches))
-			return
+			return fmt.Errorf("%s", i18n.T(i18n.ErrorNoSavedWords))
 		}
 
 		var wordStrings []string
@@ -100,8 +98,8 @@ var listCmd = &cobra.Command{
 
 		_, err = ui.RunFuzzyFinder(i18n.T(i18n.WordCount, len(wordStrings)), wordStrings, searchFunc, defFunc, checkVocabFunc, toggleVocabFunc)
 		if err != nil {
-			fmt.Printf("Err: %v\n", err)
-			return
+			return err
 		}
+		return nil
 	},
 }

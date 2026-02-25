@@ -16,35 +16,41 @@ const (
 	OptionQuiz
 	OptionConvo
 	OptionList
+	OptionInstall
 	OptionQuit
 )
 
 func getMenuLabels() map[MenuOption]string {
 	return map[MenuOption]string{
-		OptionSearch: i18n.T(i18n.MenuSearch),
-		OptionQuiz:   i18n.T(i18n.MenuQuiz),
-		OptionConvo:  i18n.T(i18n.MenuConvo),
-		OptionList:   i18n.T(i18n.MenuVocab),
-		OptionQuit:   i18n.T(i18n.MenuQuit),
+		OptionSearch:  i18n.T(i18n.MenuSearch),
+		OptionQuiz:    i18n.T(i18n.MenuQuiz),
+		OptionConvo:   i18n.T(i18n.MenuConvo),
+		OptionList:    i18n.T(i18n.MenuVocab),
+		OptionInstall: i18n.T(i18n.MenuInstall),
+		OptionQuit:    i18n.T(i18n.MenuQuit),
 	}
 }
 
 type splashModel struct {
-	saying   string
-	cursor   MenuOption
-	quitted  bool
-	selected MenuOption
-	chosen   bool
-	width    int
-	height   int
+	saying        string
+	errorMsg      string
+	dictInstalled bool
+	cursor        MenuOption
+	quitted       bool
+	selected      MenuOption
+	chosen        bool
+	width         int
+	height        int
 }
 
-func InitialSplashModel(saying string) splashModel {
+func InitialSplashModel(saying, errorMsg string, dictInstalled bool) splashModel {
 	InitStyles()
 	return splashModel{
-		saying:   saying,
-		cursor:   OptionSearch,
-		selected: -1,
+		saying:        saying,
+		errorMsg:      errorMsg,
+		dictInstalled: dictInstalled,
+		cursor:        OptionSearch,
+		selected:      -1,
 	}
 }
 
@@ -59,6 +65,9 @@ func (m splashModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 
 	case tea.KeyMsg:
+		// Clear error on any keypress
+		m.errorMsg = ""
+
 		switch msg.String() {
 		case "ctrl+c", "q", "esc":
 			m.quitted = true
@@ -66,10 +75,18 @@ func (m splashModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "up", "k":
 			if m.cursor > 0 {
 				m.cursor--
+				// Skip Install if already installed
+				if m.cursor == OptionInstall && m.dictInstalled {
+					m.cursor--
+				}
 			}
 		case "down", "j":
 			if m.cursor < OptionQuit {
 				m.cursor++
+				// Skip Install if already installed
+				if m.cursor == OptionInstall && m.dictInstalled {
+					m.cursor++
+				}
 			}
 		case "enter":
 			if m.cursor == OptionQuit {
@@ -110,6 +127,19 @@ func (m splashModel) View() string {
 		MarginBottom(2).
 		Render(i18n.T(i18n.SplashTagline))
 
+	// Error message if any
+	var errBox string
+	if m.errorMsg != "" {
+		errBox = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("1")).
+			Bold(true).
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("1")).
+			Padding(0, 2).
+			MarginBottom(1).
+			Render("❌ " + m.errorMsg)
+	}
+
 	// Saying Card
 	sayingCard := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
@@ -124,6 +154,11 @@ func (m splashModel) View() string {
 	var menu strings.Builder
 	labels := getMenuLabels()
 	for i := OptionSearch; i <= OptionQuit; i++ {
+		// Only show Install if NOT installed
+		if i == OptionInstall && m.dictInstalled {
+			continue
+		}
+
 		label := labels[i]
 		
 		icon := "  "
@@ -132,6 +167,7 @@ func (m splashModel) View() string {
 		case OptionQuiz:   icon = "🎯"
 		case OptionConvo:  icon = "💬"
 		case OptionList:   icon = "📚"
+		case OptionInstall: icon = "📥"
 		case OptionQuit:   icon = "👋"
 		}
 
@@ -152,20 +188,32 @@ func (m splashModel) View() string {
 		MarginTop(2).
 		Render(i18n.T(i18n.SplashFooter))
 
-	content := lipgloss.JoinVertical(lipgloss.Center,
-		logoStyle.Render(logo),
-		tagline,
-		sayingCard,
-		menu.String(),
-		footer,
-	)
+	var content string
+	if errBox != "" {
+		content = lipgloss.JoinVertical(lipgloss.Center,
+			logoStyle.Render(logo),
+			tagline,
+			errBox,
+			sayingCard,
+			menu.String(),
+			footer,
+		)
+	} else {
+		content = lipgloss.JoinVertical(lipgloss.Center,
+			logoStyle.Render(logo),
+			tagline,
+			sayingCard,
+			menu.String(),
+			footer,
+		)
+	}
 
 	// Perfectly center the entire content block in the terminal
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
-func RunSplash(saying string) (MenuOption, error) {
-	p := tea.NewProgram(InitialSplashModel(saying), tea.WithAltScreen())
+func RunSplash(saying, errorMsg string, dictInstalled bool) (MenuOption, error) {
+	p := tea.NewProgram(InitialSplashModel(saying, errorMsg, dictInstalled), tea.WithAltScreen())
 	m, err := p.Run()
 	if err != nil {
 		return -1, err

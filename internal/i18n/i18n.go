@@ -46,6 +46,7 @@ const (
 	QuizPlaceholder   StringID = "QuizPlaceholder"
 	PressEnterToCont  StringID = "PressEnterToCont"
 	ErrorNoWords      StringID = "ErrorNoWords"
+	ErrorNoSavedWords StringID = "ErrorNoSavedWords"
 	DictionaryLoading StringID = "DictionaryLoading"
 	// Splash screen
 	SplashTagline StringID = "SplashTagline"
@@ -53,6 +54,7 @@ const (
 	MenuQuiz      StringID = "MenuQuiz"
 	MenuConvo     StringID = "MenuConvo"
 	MenuVocab     StringID = "MenuVocab"
+	MenuInstall   StringID = "MenuInstall"
 	MenuQuit      StringID = "MenuQuit"
 	SplashFooter  StringID = "SplashFooter"
 	// Import/Export
@@ -111,13 +113,15 @@ var en = map[StringID]string{
 	QuizPlaceholder:        "Type your answer...",
 	PressEnterToCont:       "Press Enter to continue...",
 	ErrorNoWords:           "Not enough words to generate a quiz. Add more words first!",
+	ErrorNoSavedWords:      "You haven't saved any words yet. Search for words to add them!",
 	DictionaryLoading:      "Dictionary not loaded",
 	SplashTagline:          "Your AI-Powered Language Companion",
 	MenuSearch:             "SEARCH DICTIONARY",
 	MenuQuiz:               "VOCABULARY QUIZ",
 	MenuConvo:              "LANGUAGE COACH",
-	MenuVocab:              "MY VOCABULARY",
-	MenuQuit:               "QUIT",
+		MenuVocab:     "MY VOCABULARY",
+		MenuInstall:   "INSTALL DICTIONARY",
+		MenuQuit:      "QUIT",
 	SplashFooter:           "↑/↓: navigate • enter: select • q: quit",
 	ImportComplete:         "Import complete: %d added, %d skipped",
 	ImportUsage:            "Usage: voc import -f <file> OR pipe input",
@@ -172,13 +176,15 @@ var fr = map[StringID]string{
 	QuizPlaceholder:        "Tapez votre réponse...",
 	PressEnterToCont:       "Appuyez sur Entrée pour continuer...",
 	ErrorNoWords:           "Pas assez de mots pour générer un quiz. Ajoutez plus de mots d'abord !",
+	ErrorNoSavedWords:      "Vous n'avez pas encore enregistré de mots. Recherchez des mots pour les ajouter !",
 	DictionaryLoading:      "Dictionnaire non chargé",
 	SplashTagline:          "Votre compagnon linguistique propulsé par l'IA",
 	MenuSearch:             "RECHERCHER DANS LE DICTIONNAIRE",
 	MenuQuiz:               "QUIZ DE VOCABULAIRE",
 	MenuConvo:              "COACH LINGUISTIQUE",
-	MenuVocab:              "MON VOCABULAIRE",
-	MenuQuit:               "QUITTER",
+		MenuVocab:     "MON VOCABULAIRE",
+		MenuInstall:   "INSTALLER LE DICTIONNAIRE",
+		MenuQuit:      "QUITTER",
 	SplashFooter:           "↑/↓: naviguer • entrée: sélectionner • q: quitter",
 	ImportComplete:         "Importation terminée : %d ajouté(s), %d ignoré(s)",
 	ImportUsage:            "Utilisation : voc import -f <fichier> OU pipe entrée",

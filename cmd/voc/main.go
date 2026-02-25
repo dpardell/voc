@@ -48,8 +48,8 @@ and helps you review with interactive quizzes.`,
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&hostLangFlag, "host-lang", "", "UI language (en, fr)")
-	rootCmd.PersistentFlags().StringVar(&targetLangFlag, "target-lang", "", "Language you are learning (fr, es, etc.)")
+	rootCmd.PersistentFlags().StringVarP(&hostLangFlag, "host-lang", "l", "", "UI language (en, fr)")
+	rootCmd.PersistentFlags().StringVarP(&targetLangFlag, "target-lang", "t", "", "Language you are learning (fr, es, etc.)")
 }
 
 type DailySaying struct {
@@ -94,9 +94,11 @@ func getDailySaying(ctx context.Context) string {
 
 func runSplashScreen(ctx context.Context) {
 	saying := getDailySaying(ctx)
+	var lastErr string
 
 	for {
-		option, err := ui.RunSplash(saying)
+		option, err := ui.RunSplash(saying, lastErr, vocApp.Dict != nil)
+		lastErr = "" // Clear it for next time
 		if err != nil {
 			fmt.Printf("Error: %v\n", err)
 			return
@@ -105,16 +107,32 @@ func runSplashScreen(ctx context.Context) {
 		switch option {
 		case ui.OptionSearch:
 			searchCmd.SetContext(ctx)
-			searchCmd.Run(searchCmd, nil)
+			if err := searchCmd.RunE(searchCmd, nil); err != nil {
+				lastErr = err.Error()
+			}
 		case ui.OptionQuiz:
 			quizCmd.SetContext(ctx)
-			quizCmd.Run(quizCmd, nil)
+			if err := quizCmd.RunE(quizCmd, nil); err != nil {
+				lastErr = err.Error()
+			}
 		case ui.OptionConvo:
 			convoCmd.SetContext(ctx)
-			convoCmd.Run(convoCmd, nil)
+			if err := convoCmd.RunE(convoCmd, nil); err != nil {
+				lastErr = err.Error()
+			}
 		case ui.OptionList:
 			listCmd.SetContext(ctx)
-			listCmd.Run(listCmd, nil)
+			if err := listCmd.RunE(listCmd, nil); err != nil {
+				lastErr = err.Error()
+			}
+		case ui.OptionInstall:
+			installDictCmd.SetContext(ctx)
+			if err := installDictCmd.RunE(installDictCmd, nil); err != nil {
+				lastErr = err.Error()
+			} else {
+				// Re-init dictionary on success
+				vocApp.ReinitDict()
+			}
 		case ui.OptionQuit:
 			return
 		default:

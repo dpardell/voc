@@ -17,10 +17,7 @@ func Load() (*Settings, error) {
 	settings := &Settings{
 		HostLang:   "en",
 		TargetLang: "fr",
-		Dictionaries: map[string]string{
-			"fr": "https://kaikki.org/dictionary/French/kaikki.org-dictionary-French.jsonl",
-			"sk": "https://kaikki.org/dictionary/Slovak/kaikki.org-dictionary-Slovak.jsonl",
-		},
+		Dictionaries: make(map[string]string),
 	}
 
 	// 1. Load from environment variables (lowest priority)

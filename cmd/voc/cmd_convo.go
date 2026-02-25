@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"voc/internal/database"
-	"voc/internal/i18n"
 	"voc/internal/ui"
 
 	"github.com/spf13/cobra"
@@ -18,28 +17,21 @@ var convoCmd = &cobra.Command{
 	Use:   "convo",
 	Short: "Start a conversation with a language coach",
 	Long:  "Practise your skills with a friendly language coach that corrects your mistakes.",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		client, err := vocApp.GetLLMClient()
 		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-			fmt.Println("\nPress Enter to continue...")
-			var discard string
-			fmt.Scanln(&discard)
-			return
+			return fmt.Errorf("LLM error: %v (Set VERTEX_API_KEY and VERTEX_PROJECT_ID)", err)
 		}
 		defer client.Close()
 
 		progress, err := database.GetProgress()
 		if err != nil {
-			fmt.Printf("Error reading progress: %v\n", err)
-			return
+			return fmt.Errorf("error reading progress: %v", err)
 		}
 
 		if err := ui.RunConvo(client, progress); err != nil {
-			fmt.Printf("Error running conversation: %v\n", err)
-			fmt.Println("\n" + i18n.T(i18n.PressEnterToCont))
-			var discard string
-			fmt.Scanln(&discard)
+			return err
 		}
+		return nil
 	},
 }

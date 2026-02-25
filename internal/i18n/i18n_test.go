@@ -21,24 +21,50 @@ func TestTranslations(t *testing.T) {
 }
 
 func TestSetLanguage(t *testing.T) {
-	SetLanguage("fr")
-	if GetLanguage() != "fr" {
-		t.Errorf("Expected language fr, got %s", GetLanguage())
+	SetHostLanguage("fr")
+	if GetHostLanguage() != "fr" {
+		t.Errorf("Expected language fr, got %s", GetHostLanguage())
 	}
 
-	SetLanguage("invalid")
-	if GetLanguage() != "fr" {
-		t.Errorf("Should not switch to invalid language, got %s", GetLanguage())
+	SetHostLanguage("invalid")
+	if GetHostLanguage() != "fr" {
+		t.Errorf("Should not switch to invalid language, got %s", GetHostLanguage())
 	}
 
-	SetLanguage("en")
-	if GetLanguage() != "en" {
-		t.Errorf("Expected language en, got %s", GetLanguage())
+	SetHostLanguage("en")
+	if GetHostLanguage() != "en" {
+		t.Errorf("Expected language en, got %s", GetHostLanguage())
+	}
+}
+
+func TestTargetLanguage(t *testing.T) {
+	SetTargetLanguage("es")
+	if GetTargetLanguage() != "es" {
+		t.Errorf("Expected target language es, got %s", GetTargetLanguage())
+	}
+}
+
+func TestGetLanguageName(t *testing.T) {
+	tests := []struct {
+		lang     string
+		expected string
+	}{
+		{"en", "English"},
+		{"fr", "Français"},
+		{"sk", "Slovenčina"},
+		{"xx", "xx"},
+	}
+
+	for _, tt := range tests {
+		got := GetLanguageName(tt.lang)
+		if got != tt.expected {
+			t.Errorf("GetLanguageName(%s) = %s; want %s", tt.lang, got, tt.expected)
+		}
 	}
 }
 
 func TestT(t *testing.T) {
-	SetLanguage("en")
+	SetHostLanguage("en")
 	got := T(QuizTitle)
 	expected := "VOCABULARY QUIZ"
 	if got != expected {

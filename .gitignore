@@ -24,3 +24,6 @@ go.work.sum
 # Project specific
 voc
 !voc/
+
+.cache
+.modcache

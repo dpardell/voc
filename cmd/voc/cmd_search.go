@@ -17,10 +17,9 @@ var searchCmd = &cobra.Command{
 	Use:   "search",
 	Short: "Search the dictionary",
 	Long:  "Search the dictionary with the option to add words to your vocabulary.",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if vocApp.Dict == nil {
-			fmt.Println(i18n.T(i18n.DictionaryNotInstalled))
-			return
+			return fmt.Errorf("%s", i18n.T(i18n.DictionaryNotInstalled))
 		}
 
 		searchFunc := func(query string, limit int) ([]string, error) {
@@ -77,8 +76,8 @@ var searchCmd = &cobra.Command{
 
 		_, err := ui.RunFuzzyFinder(i18n.T(i18n.Searching), nil, searchFunc, defFunc, checkVocabFunc, toggleVocabFunc)
 		if err != nil {
-			fmt.Printf("Err: %v\n", err)
-			return
+			return err
 		}
+		return nil
 	},
 }
