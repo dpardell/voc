@@ -5,7 +5,7 @@ import (
 )
 
 func TestTranslations(t *testing.T) {
-	langs := []string{"en", "fr", "cs", "sk"}
+	langs := []string{"en", "fr", "cs", "sk", "es", "de"}
 	
 	for _, lang := range langs {
 		locale, ok := locales[lang]
