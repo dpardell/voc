@@ -29,6 +29,7 @@ type Database struct {
 type Word struct {
 	ID         int
 	Word       string
+	Language   string
 	Incomplete bool
 	CreatedAt  string
 	Types      []WordType
@@ -101,6 +102,11 @@ func New() (*Database, error) {
 		return nil, err
 	}
 
+	if err := migrate(db); err != nil {
+		db.Close()
+		return nil, err
+	}
+
 	d.db = db
 	return d, nil
 }
@@ -109,9 +115,11 @@ func createTables(db *sql.DB) error {
 	queries := []string{
 		`CREATE TABLE IF NOT EXISTS words (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			word TEXT UNIQUE NOT NULL,
+			word TEXT NOT NULL,
+			language TEXT NOT NULL,
 			incomplete INTEGER DEFAULT 0,
-			created_at TEXT NOT NULL
+			created_at TEXT NOT NULL,
+			UNIQUE(word, language)
 		)`,
 		`CREATE TABLE IF NOT EXISTS word_types (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -138,25 +146,40 @@ func createTables(db *sql.DB) error {
 	return nil
 }
 
+func migrate(db *sql.DB) error {
+	var count int
+	err := db.QueryRow("SELECT count(*) FROM pragma_table_info('words') WHERE name='language'").Scan(&count)
+	if err != nil {
+		return err
+	}
+	if count > 0 {
+		return nil
+	}
+
+	// Add language column. We'll default it to 'fr' for existing data as a best-effort guess.
+	_, err = db.Exec("ALTER TABLE words ADD COLUMN language TEXT NOT NULL DEFAULT 'fr'")
+	return err
+}
+
 func (d *Database) Close() error {
 	return d.db.Close()
 }
 
-func (d *Database) WordExists(word string) (bool, error) {
+func (d *Database) WordExists(word string, language string) (bool, error) {
 	var count int
-	err := d.db.QueryRow("SELECT COUNT(*) FROM words WHERE word = ?", word).Scan(&count)
+	err := d.db.QueryRow("SELECT COUNT(*) FROM words WHERE word = ? AND language = ?", word, language).Scan(&count)
 	return count > 0, err
 }
 
-func (d *Database) AddWord(word string, types []WordType, incomplete bool) error {
+func (d *Database) AddWord(word string, language string, types []WordType, incomplete bool) error {
 	tx, err := d.db.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
-	res, err := tx.Exec("INSERT INTO words (word, incomplete, created_at) VALUES (?, ?, ?)",
-		word, incomplete, time.Now().Format(time.RFC3339))
+	res, err := tx.Exec("INSERT INTO words (word, language, incomplete, created_at) VALUES (?, ?, ?, ?)",
+		word, language, incomplete, time.Now().Format(time.RFC3339))
 	if err != nil {
 		return err
 	}
@@ -188,10 +211,10 @@ func (d *Database) AddWord(word string, types []WordType, incomplete bool) error
 	return tx.Commit()
 }
 
-func (d *Database) GetWord(word string) (*Word, error) {
+func (d *Database) GetWord(word string, language string) (*Word, error) {
 	var w Word
-	err := d.db.QueryRow("SELECT id, word, incomplete, created_at FROM words WHERE word = ?", word).
-		Scan(&w.ID, &w.Word, &w.Incomplete, &w.CreatedAt)
+	err := d.db.QueryRow("SELECT id, word, language, incomplete, created_at FROM words WHERE word = ? AND language = ?", word, language).
+		Scan(&w.ID, &w.Word, &w.Language, &w.Incomplete, &w.CreatedAt)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -230,15 +253,16 @@ func (d *Database) GetWord(word string) (*Word, error) {
 	return &w, nil
 }
 
-func (d *Database) GetAllWords() ([]Word, error) {
+func (d *Database) GetAllWords(language string) ([]Word, error) {
 	query := `
-		SELECT w.id, w.word, w.incomplete, w.created_at, wt.id, wt.type, d.definition
+		SELECT w.id, w.word, w.language, w.incomplete, w.created_at, wt.id, wt.type, d.definition
 		FROM words w
 		LEFT JOIN word_types wt ON w.id = wt.word_id
 		LEFT JOIN definitions d ON wt.id = d.word_type_id
+		WHERE w.language = ?
 		ORDER BY w.word COLLATE UNICODE
 	`
-	rows, err := d.db.Query(query)
+	rows, err := d.db.Query(query, language)
 	if err != nil {
 		return nil, err
 	}
@@ -251,6 +275,7 @@ func (d *Database) GetAllWords() ([]Word, error) {
 		var (
 			id         int
 			wordText   string
+			lang       string
 			incomplete bool
 			createdAt  string
 			wtID       sql.NullInt64
@@ -258,7 +283,7 @@ func (d *Database) GetAllWords() ([]Word, error) {
 			def        sql.NullString
 		)
 
-		if err := rows.Scan(&id, &wordText, &incomplete, &createdAt, &wtID, &wtType, &def); err != nil {
+		if err := rows.Scan(&id, &wordText, &lang, &incomplete, &createdAt, &wtID, &wtType, &def); err != nil {
 			return nil, err
 		}
 
@@ -267,6 +292,7 @@ func (d *Database) GetAllWords() ([]Word, error) {
 			w = &Word{
 				ID:         id,
 				Word:       wordText,
+				Language:   lang,
 				Incomplete: incomplete,
 				CreatedAt:  createdAt,
 			}
@@ -303,8 +329,8 @@ func (d *Database) GetAllWords() ([]Word, error) {
 	return words, nil
 }
 
-func (d *Database) GetRandomWords(count int) ([]Word, error) {
-	idRows, err := d.db.Query("SELECT id FROM words ORDER BY RANDOM() LIMIT ?", count)
+func (d *Database) GetRandomWords(language string, count int) ([]Word, error) {
+	idRows, err := d.db.Query("SELECT id FROM words WHERE language = ? ORDER BY RANDOM() LIMIT ?", language, count)
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +355,7 @@ func (d *Database) GetRandomWords(count int) ([]Word, error) {
 	}
 
 	query := fmt.Sprintf(`
-		SELECT w.id, w.word, w.incomplete, w.created_at, wt.id, wt.type, d.definition
+		SELECT w.id, w.word, w.language, w.incomplete, w.created_at, wt.id, wt.type, d.definition
 		FROM words w
 		LEFT JOIN word_types wt ON w.id = wt.word_id
 		LEFT JOIN definitions d ON wt.id = d.word_type_id
@@ -343,12 +369,12 @@ func (d *Database) GetRandomWords(count int) ([]Word, error) {
 	defer rows.Close()
 
 	wordMap := make(map[int]*Word)
-	var result []Word
 
 	for rows.Next() {
 		var (
 			wID        int
 			wordText   string
+			lang       string
 			incomplete bool
 			createdAt  string
 			wtID       sql.NullInt64
@@ -356,7 +382,7 @@ func (d *Database) GetRandomWords(count int) ([]Word, error) {
 			def        sql.NullString
 		)
 
-		if err := rows.Scan(&wID, &wordText, &incomplete, &createdAt, &wtID, &wtType, &def); err != nil {
+		if err := rows.Scan(&wID, &wordText, &lang, &incomplete, &createdAt, &wtID, &wtType, &def); err != nil {
 			return nil, err
 		}
 
@@ -365,23 +391,14 @@ func (d *Database) GetRandomWords(count int) ([]Word, error) {
 			w = &Word{
 				ID:         wID,
 				Word:       wordText,
+				Language:   lang,
 				Incomplete: incomplete,
 				CreatedAt:  createdAt,
 			}
 			wordMap[wID] = w
-			// We can't guarantee order with the map, but we'll collect values later
-			// For random words, specific order in result doesn't matter much as long as it's the requested set
 		}
 
 		if wtID.Valid {
-			// Find or create WordType
-			// Since WordType is a struct in a slice, we need to track by ID to append definitions
-			// A simple way is to re-scan the slice, but a map is O(1)
-
-			// We need a unique key for the type within this word context or globally?
-			// Locally is cleaner. But let's simplify:
-			// Just iterate the existing types to find match. N is tiny (usually < 5 types per word)
-
 			var targetType *WordType
 			for i := range w.Types {
 				if w.Types[i].ID == int(wtID.Int64) {
@@ -405,6 +422,7 @@ func (d *Database) GetRandomWords(count int) ([]Word, error) {
 		}
 	}
 
+	result := make([]Word, 0, len(wordMap))
 	for _, w := range wordMap {
 		result = append(result, *w)
 	}
@@ -412,9 +430,9 @@ func (d *Database) GetRandomWords(count int) ([]Word, error) {
 	return result, nil
 }
 
-func (d *Database) DeleteWord(word string) error {
+func (d *Database) DeleteWord(word string, language string) error {
 	var wordID int
-	err := d.db.QueryRow("SELECT id FROM words WHERE word = ?", word).Scan(&wordID)
+	err := d.db.QueryRow("SELECT id FROM words WHERE word = ? AND language = ?", word, language).Scan(&wordID)
 	if err != nil {
 		return err
 	}
@@ -441,18 +459,51 @@ func (d *Database) DeleteWord(word string) error {
 	return tx.Commit()
 }
 
-func (d *Database) DeleteAllWords() error {
+func (d *Database) DeleteAllWords(language string) error {
 	tx, err := d.db.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
-	tables := []string{"definitions", "word_types", "words"}
-	for _, table := range tables {
-		if _, err := tx.Exec("DELETE FROM " + table); err != nil {
+	// Get all word IDs for this language
+	rows, err := tx.Query("SELECT id FROM words WHERE language = ?", language)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	var ids []interface{}
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
 			return err
 		}
+		ids = append(ids, id)
 	}
+
+	if len(ids) == 0 {
+		return nil
+	}
+
+	placeholders := make([]string, len(ids))
+	for i := range ids {
+		placeholders[i] = "?"
+	}
+	placeholderStr := strings.Join(placeholders, ",")
+
+	_, err = tx.Exec(fmt.Sprintf("DELETE FROM definitions WHERE word_id IN (%s)", placeholderStr), ids...)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(fmt.Sprintf("DELETE FROM word_types WHERE word_id IN (%s)", placeholderStr), ids...)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(fmt.Sprintf("DELETE FROM words WHERE id IN (%s)", placeholderStr), ids...)
+	if err != nil {
+		return err
+	}
+
 	return tx.Commit()
 }

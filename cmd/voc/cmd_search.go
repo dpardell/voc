@@ -34,7 +34,7 @@ var searchCmd = &cobra.Command{
 			if vocApp.DB == nil {
 				return false, nil
 			}
-			return vocApp.DB.WordExists(word)
+			return vocApp.DB.WordExists(word, vocApp.TargetLang)
 		}
 
 		toggleVocabFunc := func(word string) (bool, error) {
@@ -42,13 +42,13 @@ var searchCmd = &cobra.Command{
 				return false, nil
 			}
 
-			exists, err := vocApp.DB.WordExists(word)
+			exists, err := vocApp.DB.WordExists(word, vocApp.TargetLang)
 			if err != nil {
 				return false, err
 			}
 
 			if exists {
-				if err := vocApp.DB.DeleteWord(word); err != nil {
+				if err := vocApp.DB.DeleteWord(word, vocApp.TargetLang); err != nil {
 					return true, err
 				}
 				return false, nil
@@ -70,7 +70,7 @@ var searchCmd = &cobra.Command{
 				})
 			}
 
-			if err := vocApp.DB.AddWord(word, dbTypes, false); err != nil {
+			if err := vocApp.DB.AddWord(word, vocApp.TargetLang, dbTypes, false); err != nil {
 				return false, err
 			}
 			return true, nil

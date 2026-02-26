@@ -18,7 +18,7 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all saved words",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		words, err := vocApp.DB.GetAllWords()
+		words, err := vocApp.DB.GetAllWords(vocApp.TargetLang)
 		if err != nil {
 			return err
 		}
@@ -54,17 +54,17 @@ var listCmd = &cobra.Command{
 		}
 
 		checkVocabFunc := func(word string) (bool, error) {
-			return vocApp.DB.WordExists(word)
+			return vocApp.DB.WordExists(word, vocApp.TargetLang)
 		}
 
 		toggleVocabFunc := func(word string) (bool, error) {
-			exists, err := vocApp.DB.WordExists(word)
+			exists, err := vocApp.DB.WordExists(word, vocApp.TargetLang)
 			if err != nil {
 				return false, err
 			}
 
 			if exists {
-				if err := vocApp.DB.DeleteWord(word); err != nil {
+				if err := vocApp.DB.DeleteWord(word, vocApp.TargetLang); err != nil {
 					return true, err
 				}
 				return false, nil
@@ -90,7 +90,7 @@ var listCmd = &cobra.Command{
 				})
 			}
 
-			if err := vocApp.DB.AddWord(word, dbTypes, false); err != nil {
+			if err := vocApp.DB.AddWord(word, vocApp.TargetLang, dbTypes, false); err != nil {
 				return false, err
 			}
 			return true, nil

@@ -39,8 +39,8 @@ func runAIQuiz(ctx context.Context) error {
 		return fmt.Errorf("error reading progress: %v", err)
 	}
 
-	// Fetch 10 random words for the quiz
-	words, err := vocApp.DB.GetRandomWords(10)
+	// Fetch 10 random words for the quiz in the target language
+	words, err := vocApp.DB.GetRandomWords(vocApp.TargetLang, 10)
 	if err != nil {
 		return fmt.Errorf("error fetching words: %v", err)
 	}
