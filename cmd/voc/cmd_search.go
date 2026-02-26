@@ -25,6 +25,7 @@ var searchCmd = &cobra.Command{
 		searchFunc := func(query string, limit int) ([]string, error) {
 			return vocApp.Dict.Search(query, limit)
 		}
+
 		defFunc := func(w string) (string, error) {
 			return vocApp.Dict.Definition(w)
 		}
@@ -40,6 +41,7 @@ var searchCmd = &cobra.Command{
 			if vocApp.DB == nil {
 				return false, nil
 			}
+
 			exists, err := vocApp.DB.WordExists(word)
 			if err != nil {
 				return false, err

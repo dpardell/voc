@@ -23,8 +23,8 @@ type Question struct {
 }
 
 type Client struct {
-	client *genai.Client
-	model  *genai.GenerativeModel
+	client    *genai.Client
+	model     *genai.GenerativeModel
 	modelName string
 }
 
@@ -49,7 +49,6 @@ func NewClient(apiKey, projectID, location, modelName string) (*Client, error) {
 	}, nil
 }
 
-
 func (c *Client) Close() {
 	c.client.Close()
 }
@@ -58,11 +57,12 @@ func sanitizeJSON(text string) string {
 	text = strings.TrimSpace(text)
 	// Remove markdown code blocks if present
 	if strings.Contains(text, "```") {
-		parts := strings.Split(text, "```")
-		for _, part := range parts {
+		parts := strings.SplitSeq(text, "```")
+		for part := range parts {
 			part = strings.TrimSpace(part)
-			if strings.HasPrefix(part, "json") {
-				return strings.TrimSpace(strings.TrimPrefix(part, "json"))
+			part, has := strings.CutPrefix(part, "json")
+			if has {
+				return strings.TrimSpace(part)
 			}
 			// If it's just a code block without "json" tag
 			if len(part) > 0 && (strings.HasPrefix(part, "{") || strings.HasPrefix(part, "[")) {
@@ -79,13 +79,12 @@ func (c *Client) generateWithRetry(ctx context.Context, model *genai.GenerativeM
 	maxRetries := 3
 	backoff := 2 * time.Second
 
-	for i := 0; i < maxRetries; i++ {
+	for i := range maxRetries {
 		resp, err = model.GenerateContent(ctx, genai.Text(prompt))
 		if err == nil {
 			return resp, nil
 		}
 
-		// Check if it's a 429 error
 		if gerr, ok := err.(*googleapi.Error); ok && gerr.Code == http.StatusTooManyRequests {
 			if i < maxRetries-1 {
 				time.Sleep(backoff)
@@ -218,42 +217,7 @@ type Message struct {
 	Content string
 }
 
-func (c *Client) GenerateDailySaying(ctx context.Context, lang string, progress string) (string, error) {
-	// Use plain text for this
-	model := c.client.GenerativeModel(c.modelName)
-	model.ResponseMIMEType = "text/plain"
-
-	prompt := fmt.Sprintf(`
-You are a language learning motivator.
-The learner is practicing: %s.
-Their current progress is:
-%s
-
-Generate a fun, short, and inspiring saying or idiom in the target language (%s) that is appropriate for their level.
-Provide the saying, its pronunciation (if helpful), and a brief English translation.
-Keep it under 3 lines.
-`, lang, progress, lang)
-
-	resp, err := c.generateWithRetry(ctx, model, prompt)
-	if err != nil {
-		return "", err
-	}
-
-	if len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
-		return "", fmt.Errorf("no response from LLM")
-	}
-
-	part := resp.Candidates[0].Content.Parts[0]
-	text, ok := part.(genai.Text)
-	if !ok {
-		return "", fmt.Errorf("unexpected response format")
-	}
-
-	return string(text), nil
-}
-
 func (c *Client) Chat(ctx context.Context, progress string, history []Message, userMessage string, hostLang, targetLang string) (*ChatResponse, []Message, error) {
-	// Use gemini-2.0-flash for potentially better stability and speed
 	chatModel := c.client.GenerativeModel(c.modelName)
 	chatModel.ResponseMIMEType = "application/json"
 
@@ -298,13 +262,12 @@ CRITICAL RULES:
 	maxRetries := 3
 	backoff := 2 * time.Second
 
-	for i := 0; i < maxRetries; i++ {
+	for i := range maxRetries {
 		resp, err = session.SendMessage(ctx, genai.Text(userMessage))
 		if err == nil {
 			break
 		}
 
-		// Check if it's a 429 error
 		if gerr, ok := err.(*googleapi.Error); ok && gerr.Code == http.StatusTooManyRequests {
 			if i < maxRetries-1 {
 				time.Sleep(backoff)

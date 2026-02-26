@@ -9,7 +9,7 @@ func TestNewApp(t *testing.T) {
 	// Mock environment to avoid side effects
 	tempDir, _ := os.MkdirTemp("", "voc-app-test-*")
 	defer os.RemoveAll(tempDir)
-	
+
 	os.Setenv("VOC_USER_DB_PATH", tempDir+"/voc.db")
 	defer os.Unsetenv("VOC_USER_DB_PATH")
 
@@ -35,7 +35,6 @@ func TestGetLLMClientErrors(t *testing.T) {
 
 	// Clear env
 	os.Unsetenv("VERTEX_API_KEY")
-	os.Unsetenv("GEMINI_API_KEY")
 	os.Unsetenv("VERTEX_PROJECT_ID")
 
 	_, err := app.GetLLMClient()
@@ -45,7 +44,7 @@ func TestGetLLMClientErrors(t *testing.T) {
 
 	os.Setenv("VERTEX_API_KEY", "test-key")
 	defer os.Unsetenv("VERTEX_API_KEY")
-	
+
 	_, err = app.GetLLMClient()
 	if err == nil {
 		t.Error("Expected error when project ID is missing")

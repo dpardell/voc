@@ -63,17 +63,12 @@ func GetProgressPath() (string, error) {
 	return d.resolveDataPath("progress.md")
 }
 
-func GetDailySayingPath() (string, error) {
-	d := &Database{}
-	return d.resolveDataPath("daily_saying.json")
-}
-
 func GetProgress() (string, error) {
 	path, err := GetProgressPath()
 	if err != nil {
 		return "", err
 	}
-	
+
 	bytes, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -309,7 +304,6 @@ func (d *Database) GetAllWords() ([]Word, error) {
 }
 
 func (d *Database) GetRandomWords(count int) ([]Word, error) {
-	// First, select random word IDs
 	idRows, err := d.db.Query("SELECT id FROM words ORDER BY RANDOM() LIMIT ?", count)
 	if err != nil {
 		return nil, err
@@ -329,12 +323,11 @@ func (d *Database) GetRandomWords(count int) ([]Word, error) {
 		return []Word{}, nil
 	}
 
-	// Build query for details
 	placeholders := make([]string, len(ids))
 	for i := range ids {
 		placeholders[i] = "?"
 	}
-	
+
 	query := fmt.Sprintf(`
 		SELECT w.id, w.word, w.incomplete, w.created_at, wt.id, wt.type, d.definition
 		FROM words w
@@ -384,11 +377,11 @@ func (d *Database) GetRandomWords(count int) ([]Word, error) {
 			// Find or create WordType
 			// Since WordType is a struct in a slice, we need to track by ID to append definitions
 			// A simple way is to re-scan the slice, but a map is O(1)
-			
+
 			// We need a unique key for the type within this word context or globally?
 			// Locally is cleaner. But let's simplify:
 			// Just iterate the existing types to find match. N is tiny (usually < 5 types per word)
-			
+
 			var targetType *WordType
 			for i := range w.Types {
 				if w.Types[i].ID == int(wtID.Int64) {
@@ -396,7 +389,7 @@ func (d *Database) GetRandomWords(count int) ([]Word, error) {
 					break
 				}
 			}
-			
+
 			if targetType == nil {
 				newType := WordType{
 					ID:   int(wtID.Int64),
@@ -405,7 +398,7 @@ func (d *Database) GetRandomWords(count int) ([]Word, error) {
 				w.Types = append(w.Types, newType)
 				targetType = &w.Types[len(w.Types)-1]
 			}
-			
+
 			if def.Valid {
 				targetType.Definitions = append(targetType.Definitions, def.String)
 			}
@@ -415,7 +408,7 @@ func (d *Database) GetRandomWords(count int) ([]Word, error) {
 	for _, w := range wordMap {
 		result = append(result, *w)
 	}
-	
+
 	return result, nil
 }
 

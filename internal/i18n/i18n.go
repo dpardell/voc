@@ -65,13 +65,8 @@ const (
 	QuizGenerating StringID = "QuizGenerating"
 	QuizUpdating   StringID = "QuizUpdating"
 	QuizHintType   StringID = "QuizHintType"
-	// CLI extra strings
-	FlashcardsWelcome StringID = "FlashcardsWelcome"
-	FlashcardsPress   StringID = "FlashcardsPress"
-	FlashcardsNext    StringID = "FlashcardsNext"
-	FlashcardsEnd     StringID = "FlashcardsEnd"
-	DailySayingPrompt StringID = "DailySayingPrompt"
-	NoWordsToQuiz     StringID = "NoWordsToQuiz"
+	NoWordsToQuiz  StringID = "NoWordsToQuiz"
+	LLMVarsMissing StringID = "LLMVarsMissing"
 )
 
 var en = map[StringID]string{
@@ -119,9 +114,9 @@ var en = map[StringID]string{
 	MenuSearch:             "SEARCH DICTIONARY",
 	MenuQuiz:               "VOCABULARY QUIZ",
 	MenuConvo:              "LANGUAGE COACH",
-		MenuVocab:     "MY VOCABULARY",
-		MenuInstall:   "INSTALL DICTIONARY",
-		MenuQuit:      "QUIT",
+	MenuVocab:              "MY VOCABULARY",
+	MenuInstall:            "INSTALL DICTIONARY",
+	MenuQuit:               "QUIT",
 	SplashFooter:           "↑/↓: navigate • enter: select • q: quit",
 	ImportComplete:         "Import complete: %d added, %d skipped",
 	ImportUsage:            "Usage: voc import -f <file> OR pipe input",
@@ -129,12 +124,8 @@ var en = map[StringID]string{
 	QuizGenerating:         "Generating quiz...",
 	QuizUpdating:           "Updating progress...",
 	QuizHintType:           "Type your answer and press Enter",
-	FlashcardsWelcome:      "Flashcards mode - Press Enter to see definition, Ctrl+C to exit",
-	FlashcardsPress:        "Press Enter to see definition... ",
-	FlashcardsNext:         "Press Enter for next word... ",
-	FlashcardsEnd:          "Quiz ended.",
-	DailySayingPrompt:      "Welcome back! (Set VERTEX_API_KEY/PROJECT_ID for daily sayings)",
 	NoWordsToQuiz:          "No words to quiz.",
+	LLMVarsMissing:         "VERTEX_API_KEY and VERTEX_PROJECT_ID must be set",
 }
 
 var fr = map[StringID]string{
@@ -182,9 +173,9 @@ var fr = map[StringID]string{
 	MenuSearch:             "RECHERCHER DANS LE DICTIONNAIRE",
 	MenuQuiz:               "QUIZ DE VOCABULAIRE",
 	MenuConvo:              "COACH LINGUISTIQUE",
-		MenuVocab:     "MON VOCABULAIRE",
-		MenuInstall:   "INSTALLER LE DICTIONNAIRE",
-		MenuQuit:      "QUITTER",
+	MenuVocab:              "MON VOCABULAIRE",
+	MenuInstall:            "INSTALLER LE DICTIONNAIRE",
+	MenuQuit:               "QUITTER",
 	SplashFooter:           "↑/↓: naviguer • entrée: sélectionner • q: quitter",
 	ImportComplete:         "Importation terminée : %d ajouté(s), %d ignoré(s)",
 	ImportUsage:            "Utilisation : voc import -f <fichier> OU pipe entrée",
@@ -192,12 +183,8 @@ var fr = map[StringID]string{
 	QuizGenerating:         "Génération du quiz...",
 	QuizUpdating:           "Mise à jour de la progression...",
 	QuizHintType:           "Tapez votre réponse et appuyez sur Entrée",
-	FlashcardsWelcome:      "Mode Flashcards - Appuyez sur Entrée pour voir la définition, Ctrl+C pour quitter",
-	FlashcardsPress:        "Appuyez sur Entrée pour voir la définition... ",
-	FlashcardsNext:         "Appuyez sur Entrée pour le mot suivant... ",
-	FlashcardsEnd:          "Quiz terminé.",
-	DailySayingPrompt:      "Bon retour ! (Configurez VERTEX_API_KEY/PROJECT_ID pour les dictons quotidiens)",
 	NoWordsToQuiz:          "Aucun mot pour le quiz.",
+	LLMVarsMissing:         "VERTEX_API_KEY et VERTEX_PROJECT_ID doivent être définis",
 }
 
 var cs = map[StringID]string{
@@ -255,12 +242,8 @@ var cs = map[StringID]string{
 	QuizGenerating:         "Generování kvízu...",
 	QuizUpdating:           "Aktualizace pokroku...",
 	QuizHintType:           "Napište svou odpověď a stiskněte Enter",
-	FlashcardsWelcome:      "Režim kartiček - Stiskněte Enter pro zobrazení definice, Ctrl+C pro ukončení",
-	FlashcardsPress:        "Stiskněte Enter pro zobrazení definice... ",
-	FlashcardsNext:         "Stiskněte Enter pro další slovo... ",
-	FlashcardsEnd:          "Kvíz ukončen.",
-	DailySayingPrompt:      "Vítejte zpět! (Nastavte VERTEX_API_KEY/PROJECT_ID pro denní rčení)",
 	NoWordsToQuiz:          "Žádná slova pro kvíz.",
+	LLMVarsMissing:         "VERTEX_API_KEY a VERTEX_PROJECT_ID musí být nastaveny",
 }
 
 var sk = map[StringID]string{
@@ -318,12 +301,8 @@ var sk = map[StringID]string{
 	QuizGenerating:         "Generovanie kvízu...",
 	QuizUpdating:           "Aktualizácia pokroku...",
 	QuizHintType:           "Napíšte svoju odpoveď a stlačte Enter",
-	FlashcardsWelcome:      "Režim kartičiek - Stlačte Enter pre zobrazenie definície, Ctrl+C pre ukončenie",
-	FlashcardsPress:        "Stlačte Enter pre zobrazenie definice... ",
-	FlashcardsNext:         "Stlačte Enter pre ďalšie slovo... ",
-	FlashcardsEnd:          "Kvíz ukončený.",
-	DailySayingPrompt:      "Vitajte späť! (Nastavte VERTEX_API_KEY/PROJECT_ID pre denné porekadlá)",
 	NoWordsToQuiz:          "Žiadne slová pre kvíz.",
+	LLMVarsMissing:         "VERTEX_API_KEY a VERTEX_PROJECT_ID musia byť nastavené",
 }
 
 var es = map[StringID]string{
@@ -381,12 +360,8 @@ var es = map[StringID]string{
 	QuizGenerating:         "Generando cuestionario...",
 	QuizUpdating:           "Actualizando progreso...",
 	QuizHintType:           "Escriba su respuesta y presione Enter",
-	FlashcardsWelcome:      "Modo tarjetas - Presione Enter para ver la definición, Ctrl+C para salir",
-	FlashcardsPress:        "Presione Enter para ver la definición... ",
-	FlashcardsNext:         "Presione Enter para la siguiente palabra... ",
-	FlashcardsEnd:          "Cuestionario finalizado.",
-	DailySayingPrompt:      "¡Bienvenido de nuevo! (Configure VERTEX_API_KEY/PROJECT_ID para dichos diarios)",
 	NoWordsToQuiz:          "No hay palabras para el cuestionario.",
+	LLMVarsMissing:         "VERTEX_API_KEY y VERTEX_PROJECT_ID deben estar configurados",
 }
 
 var de = map[StringID]string{
@@ -444,12 +419,8 @@ var de = map[StringID]string{
 	QuizGenerating:         "Quiz wird erstellt...",
 	QuizUpdating:           "Fortschritt wird aktualisiert...",
 	QuizHintType:           "Geben Sie Ihre Antwort ein und drücken Sie Enter",
-	FlashcardsWelcome:      "Lernkarten-Modus - Drücken Sie Enter für die Definition, Strg+C zum Beenden",
-	FlashcardsPress:        "Drücken Sie Enter, um die Definition zu sehen... ",
-	FlashcardsNext:         "Drücken Sie Enter für das nächste Wort... ",
-	FlashcardsEnd:          "Quiz beendet.",
-	DailySayingPrompt:      "Willkommen zurück! (Stellen Sie VERTEX_API_KEY/PROJECT_ID für tägliche Sprüche ein)",
 	NoWordsToQuiz:          "Keine Wörter für das Quiz.",
+	LLMVarsMissing:         "VERTEX_API_KEY und VERTEX_PROJECT_ID müssen gesetzt sein",
 }
 
 var pt = map[StringID]string{
@@ -507,12 +478,8 @@ var pt = map[StringID]string{
 	QuizGenerating:         "A gerar questionário...",
 	QuizUpdating:           "A atualizar progresso...",
 	QuizHintType:           "Escreva a sua resposta e pressione Enter",
-	FlashcardsWelcome:      "Modo cartões - Pressione Enter para ver a definição, Ctrl+C para sair",
-	FlashcardsPress:        "Pressione Enter para ver a definição... ",
-	FlashcardsNext:         "Pressione Enter para a palavra seguinte... ",
-	FlashcardsEnd:          "Questionário terminado.",
-	DailySayingPrompt:      "Bem-vindo de volta! (Configure VERTEX_API_KEY/PROJECT_ID para frases diárias)",
 	NoWordsToQuiz:          "Sem palavras para o questionário.",
+	LLMVarsMissing:         "VERTEX_API_KEY e VERTEX_PROJECT_ID devem estar configurados",
 }
 
 var ptBR = map[StringID]string{
@@ -570,12 +537,8 @@ var ptBR = map[StringID]string{
 	QuizGenerating:         "Gerando quiz...",
 	QuizUpdating:           "Atualizando progresso...",
 	QuizHintType:           "Escreva sua resposta e pressione Enter",
-	FlashcardsWelcome:      "Modo cartões - Pressione Enter para ver a definição, Ctrl+C para sair",
-	FlashcardsPress:        "Pressione Enter para ver a definição... ",
-	FlashcardsNext:         "Pressione Enter para a próxima palavra... ",
-	FlashcardsEnd:          "Quiz encerrado.",
-	DailySayingPrompt:      "Bem-vindo de volta! (Configure VERTEX_API_KEY/PROJECT_ID para frases diárias)",
 	NoWordsToQuiz:          "Sem palavras para o quiz.",
+	LLMVarsMissing:         "VERTEX_API_KEY e VERTEX_PROJECT_ID devem estar configurados",
 }
 
 var activeHostLang = "en"
@@ -630,7 +593,6 @@ func GetLanguageName(lang string) string {
 	}
 	return lang
 }
-
 
 func T(id StringID, args ...any) string {
 	translations, ok := locales[activeHostLang]

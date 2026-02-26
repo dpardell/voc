@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"fmt"
-	"math/rand"
 	"os"
 
 	"voc/internal/database"
@@ -14,10 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var flashcardsMode bool
-
 func init() {
-	quizCmd.Flags().BoolVar(&flashcardsMode, "flashcards", false, "Use legacy flashcards mode")
 	rootCmd.AddCommand(quizCmd)
 }
 
@@ -25,9 +20,6 @@ var quizCmd = &cobra.Command{
 	Use:   "quiz",
 	Short: "Interactive quiz mode",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if flashcardsMode {
-			return runFlashcards()
-		}
 		return runAIQuiz(cmd.Context())
 	},
 }
@@ -73,53 +65,5 @@ func runAIQuiz(ctx context.Context) error {
 			return fmt.Errorf("error saving progress file: %v", err)
 		}
 	}
-	return nil
-}
-
-
-func runFlashcards() error {
-	words, err := vocApp.DB.GetAllWords()
-	if err != nil {
-		return err
-	}
-
-	if len(words) == 0 {
-		return fmt.Errorf("%s", i18n.T(i18n.NoWordsToQuiz))
-	}
-
-	perm := rand.Perm(len(words))
-
-	fmt.Println(i18n.T(i18n.FlashcardsWelcome))
-	fmt.Println()
-
-	scanner := bufio.NewScanner(os.Stdin)
-
-	for _, idx := range perm {
-		w := words[idx]
-
-		// Fetch full details
-		fullWord, err := vocApp.DB.GetWord(w.Word)
-		if err != nil || fullWord == nil || len(fullWord.Types) == 0 {
-			continue
-		}
-
-		// Random type
-		typeIdx := rand.Intn(len(fullWord.Types))
-		t := fullWord.Types[typeIdx]
-
-		fmt.Printf("Word: %s (%s)\n", fullWord.Word, t.Type)
-		fmt.Print(i18n.T(i18n.FlashcardsPress))
-		scanner.Scan()
-
-		fmt.Println("Definition:")
-		for _, d := range t.Definitions {
-			fmt.Printf("  - %s\n", d)
-		}
-		fmt.Println()
-		fmt.Print(i18n.T(i18n.FlashcardsNext))
-		scanner.Scan()
-		fmt.Println()
-	}
-	fmt.Println(i18n.T(i18n.FlashcardsEnd))
 	return nil
 }

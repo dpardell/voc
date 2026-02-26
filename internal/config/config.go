@@ -15,12 +15,11 @@ type Settings struct {
 
 func Load() (*Settings, error) {
 	settings := &Settings{
-		HostLang:   "en",
-		TargetLang: "fr",
+		HostLang:     "en",
+		TargetLang:   "fr",
 		Dictionaries: make(map[string]string),
 	}
 
-	// 1. Load from environment variables (lowest priority)
 	if lang := os.Getenv("VOC_HOST_LANG"); lang != "" {
 		settings.HostLang = lang
 	}
@@ -28,7 +27,6 @@ func Load() (*Settings, error) {
 		settings.TargetLang = lang
 	}
 
-	// 2. Load from settings file
 	configDir, err := os.UserConfigDir()
 	if err == nil {
 		configPath := filepath.Join(configDir, "voc", "settings.yaml")

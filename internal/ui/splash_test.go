@@ -7,7 +7,7 @@ import (
 )
 
 func TestSplashModel(t *testing.T) {
-	m := InitialSplashModel("Test Saying", "", true)
+	m := InitialSplashModel("", true)
 
 	// Test window resize
 	m2, _ := m.Update(tea.WindowSizeMsg{Width: 100, Height: 40})
@@ -35,21 +35,21 @@ func TestSplashModel(t *testing.T) {
 }
 
 func TestSplashModelNoDict(t *testing.T) {
-	m := InitialSplashModel("Test Saying", "", false)
-	
+	m := InitialSplashModel("", false)
+
 	// Should show Install option
 	// Initial cursor at Search
 	// Down -> Quiz
 	// Down -> Convo
 	// Down -> List
 	// Down -> Install
-	
+
 	sm := m
 	for i := 0; i < 4; i++ {
 		m2, _ := sm.Update(tea.KeyMsg{Type: tea.KeyDown})
 		sm = m2.(splashModel)
 	}
-	
+
 	if sm.cursor != OptionInstall {
 		t.Errorf("Expected cursor at OptionInstall after 4 downs when dict missing, got %d", sm.cursor)
 	}

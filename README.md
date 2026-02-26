@@ -14,7 +14,6 @@ are defintely welcome. Long term, I would like for this project to head in the d
 
 ## Features
 
-- **Interactive Hub**: A central splash screen to access all features, view daily AI-powered sayings, and manage installations.
 - **Dictionary Search**: Interactive, real-time search in local dictionary with text indexing.
 - **Personal Vocabulary**: Save words to your personal vocabulary.
 - **AI-Powered Learning**:
@@ -80,7 +79,7 @@ voc -l en -t fr
 ## Usage
 
 ### 1. Interactive Hub
-Simply run `voc` to enter the interactive splash screen. From here, you can access all modules, view a daily AI-powered saying, and install dictionaries if missing.
+Simply run `voc` to enter the interactive splash screen. From here, you can access all modules.
 
 ### 2. Initialize Dictionary
 Before searching, install the dictionary for your target language:
@@ -107,7 +106,6 @@ Start an AI-powered quiz session tailored to your saved words:
 ```bash
 voc quiz
 ```
-*Note: Use `voc quiz --flashcards` for traditional offline flashcards.*
 
 ### 5. Practice Conversation
 Chat with an AI language coach who will correct your mistakes as you go:

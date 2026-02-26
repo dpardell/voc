@@ -32,7 +32,6 @@ func getMenuLabels() map[MenuOption]string {
 }
 
 type splashModel struct {
-	saying        string
 	errorMsg      string
 	dictInstalled bool
 	cursor        MenuOption
@@ -43,10 +42,9 @@ type splashModel struct {
 	height        int
 }
 
-func InitialSplashModel(saying, errorMsg string, dictInstalled bool) splashModel {
+func InitialSplashModel(errorMsg string, dictInstalled bool) splashModel {
 	InitStyles()
 	return splashModel{
-		saying:        saying,
 		errorMsg:      errorMsg,
 		dictInstalled: dictInstalled,
 		cursor:        OptionSearch,
@@ -140,16 +138,6 @@ func (m splashModel) View() string {
 			Render("❌ " + m.errorMsg)
 	}
 
-	// Saying Card
-	sayingCard := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		Padding(1, 2).
-		MarginBottom(2).
-		Width(50).
-		Align(lipgloss.Center).
-		Render(lipgloss.NewStyle().Italic(true).Foreground(lipgloss.Color("246")).Render(m.saying))
-
 	// Menu
 	var menu strings.Builder
 	labels := getMenuLabels()
@@ -160,26 +148,32 @@ func (m splashModel) View() string {
 		}
 
 		label := labels[i]
-		
+
 		icon := "  "
 		switch i {
-		case OptionSearch: icon = "🔍"
-		case OptionQuiz:   icon = "🎯"
-		case OptionConvo:  icon = "💬"
-		case OptionList:   icon = "📚"
-		case OptionInstall: icon = "📥"
-		case OptionQuit:   icon = "👋"
+		case OptionSearch:
+			icon = "🔍"
+		case OptionQuiz:
+			icon = "🎯"
+		case OptionConvo:
+			icon = "💬"
+		case OptionList:
+			icon = "📚"
+		case OptionInstall:
+			icon = "📥"
+		case OptionQuit:
+			icon = "👋"
 		}
 
 		if i == m.cursor {
 			menu.WriteString(lipgloss.NewStyle().
 				Foreground(lipgloss.Color("229")).
 				Bold(true).
-				Render(" > " + icon + " " + label) + "\n")
+				Render(" > "+icon+" "+label) + "\n")
 		} else {
 			menu.WriteString(lipgloss.NewStyle().
 				Foreground(lipgloss.Color("241")).
-				Render("   " + icon + " " + label) + "\n")
+				Render("   "+icon+" "+label) + "\n")
 		}
 	}
 
@@ -194,7 +188,6 @@ func (m splashModel) View() string {
 			logoStyle.Render(logo),
 			tagline,
 			errBox,
-			sayingCard,
 			menu.String(),
 			footer,
 		)
@@ -202,7 +195,6 @@ func (m splashModel) View() string {
 		content = lipgloss.JoinVertical(lipgloss.Center,
 			logoStyle.Render(logo),
 			tagline,
-			sayingCard,
 			menu.String(),
 			footer,
 		)
@@ -212,8 +204,8 @@ func (m splashModel) View() string {
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
-func RunSplash(saying, errorMsg string, dictInstalled bool) (MenuOption, error) {
-	p := tea.NewProgram(InitialSplashModel(saying, errorMsg, dictInstalled), tea.WithAltScreen())
+func RunSplash(errorMsg string, dictInstalled bool) (MenuOption, error) {
+	p := tea.NewProgram(InitialSplashModel(errorMsg, dictInstalled), tea.WithAltScreen())
 	m, err := p.Run()
 	if err != nil {
 		return -1, err

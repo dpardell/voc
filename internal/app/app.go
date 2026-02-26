@@ -21,11 +21,9 @@ type App struct {
 func NewApp(hostLang, targetLang string) (*App, error) {
 	settings, err := config.Load()
 	if err != nil {
-		// Just log error and continue with defaults
 		fmt.Printf("Warning: failed to load settings: %v\n", err)
 	}
 
-	// 3. CLI flags override (passed in)
 	if hostLang != "" {
 		settings.HostLang = hostLang
 	}
@@ -83,7 +81,7 @@ func (a *App) GetLLMClient() (*llm.Client, error) {
 	modelName := os.Getenv("VERTEX_MODEL")
 
 	if apiKey == "" || projectID == "" {
-		return nil, fmt.Errorf("VERTEX_API_KEY and VERTEX_PROJECT_ID must be set")
+		return nil, fmt.Errorf("%s", i18n.T(i18n.LLMVarsMissing))
 	}
 
 	return llm.NewClient(apiKey, projectID, location, modelName)
