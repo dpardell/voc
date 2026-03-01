@@ -103,13 +103,36 @@ func TestConfigLoadFile(t *testing.T) {
 }
 
 func TestConfigSaveLoad(t *testing.T) {
-	tempDir, _ := os.MkdirTemp("", "voc-config-save-test-*")
-	defer os.RemoveAll(tempDir)
-	
-	// os.UserConfigDir uses XDG_CONFIG_HOME on Linux
-	origXDG := os.Getenv("XDG_CONFIG_HOME")
-	os.Setenv("XDG_CONFIG_HOME", tempDir)
-	defer os.Setenv("XDG_CONFIG_HOME", origXDG)
+	origUserConfigDir := userConfigDir
+	origWriteFile := writeFile
+	origMkdirAll := mkdirAll
+	origReadFile := readFile
+	origGetenv := getenv
+	defer func() {
+		userConfigDir = origUserConfigDir
+		writeFile = origWriteFile
+		mkdirAll = origMkdirAll
+		readFile = origReadFile
+		getenv = origGetenv
+	}()
+
+	var savedData []byte
+	var savedPath string
+
+	userConfigDir = func() (string, error) { return "/mock/config", nil }
+	mkdirAll = func(path string, perm os.FileMode) error { return nil }
+	writeFile = func(name string, data []byte, perm os.FileMode) error {
+		savedPath = name
+		savedData = data
+		return nil
+	}
+	readFile = func(name string) ([]byte, error) {
+		if name == savedPath {
+			return savedData, nil
+		}
+		return nil, os.ErrNotExist
+	}
+	getenv = func(key string) string { return "" }
 
 	s := &Settings{
 		HostLang:   "de",
@@ -123,10 +146,9 @@ func TestConfigSaveLoad(t *testing.T) {
 		t.Fatalf("Save failed: %v", err)
 	}
 
-	// Verify file exists
-	configPath := filepath.Join(tempDir, "voc", "settings.yaml")
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		t.Fatalf("Config file was not created at %s", configPath)
+	expectedPath := filepath.Join("/mock/config", "voc", "settings.yaml")
+	if savedPath != expectedPath {
+		t.Errorf("Expected path %s, got %s", expectedPath, savedPath)
 	}
 
 	// Load back

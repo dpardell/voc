@@ -17,6 +17,8 @@ var (
 	getenv        = os.Getenv
 	userConfigDir = os.UserConfigDir
 	readFile      = os.ReadFile
+	writeFile     = os.WriteFile
+	mkdirAll      = os.MkdirAll
 )
 
 func Load() (*Settings, error) {
@@ -59,12 +61,12 @@ func Load() (*Settings, error) {
 }
 
 func (s *Settings) Save() error {
-	configDir, err := os.UserConfigDir()
+	configDir, err := userConfigDir()
 	if err != nil {
 		return err
 	}
 	configPath := filepath.Join(configDir, "voc", "settings.yaml")
-	if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
+	if err := mkdirAll(filepath.Dir(configPath), 0755); err != nil {
 		return err
 	}
 
@@ -73,5 +75,5 @@ func (s *Settings) Save() error {
 		return err
 	}
 
-	return os.WriteFile(configPath, data, 0644)
+	return writeFile(configPath, data, 0644)
 }
