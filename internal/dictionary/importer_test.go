@@ -9,10 +9,10 @@ func TestGetDefaultKaikkiURL(t *testing.T) {
 		lang     string
 		expected string
 	}{
-		{"fr", "https://kaikki.org/frwiktionary/Français/kaikki.org-dictionary-Français.jsonl.gz"},
-		{"en", "https://kaikki.org/enwiktionary/English/kaikki.org-dictionary-English.jsonl.gz"},
-		{"sk", "https://kaikki.org/skwiktionary/Slovenčina/kaikki.org-dictionary-Slovenčina.jsonl.gz"},
-		{"xx", "https://kaikki.org/xxwiktionary/xx/kaikki.org-dictionary-xx.jsonl.gz"},
+		{"fr", "https://kaikki.org/dictionary/French/kaikki.org-dictionary-French.jsonl.gz"},
+		{"en", "https://kaikki.org/dictionary/English/kaikki.org-dictionary-English.jsonl.gz"},
+		{"sk", "https://kaikki.org/dictionary/Slovak/kaikki.org-dictionary-Slovak.jsonl.gz"},
+		{"xx", "https://kaikki.org/dictionary/xx/kaikki.org-dictionary-xx.jsonl.gz"},
 	}
 
 	for _, tt := range tests {

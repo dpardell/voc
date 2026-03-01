@@ -5,13 +5,17 @@ datadir?=$(PREFIX)/share/voc
 
 LDFLAGS=-ldflags "-X 'voc/internal/dictionary.DefaultDictionaryDirectory=$(datadir)' -X 'voc/internal/database.DefaultUserDBPath=$(datadir)/voc.db'"
 
-.PHONY: all build clean install uninstall
+.PHONY: all build clean install uninstall test
 
 all: build
 
 build:
 	@echo "Building $(BINARY_NAME)..."
 	go build $(LDFLAGS) -tags "fts5" -o $(BINARY_NAME) ./cmd/voc
+
+test:
+	@echo "Running tests..."
+	go test -tags "fts5" ./...
 
 clean:
 	@echo "Cleaning..."

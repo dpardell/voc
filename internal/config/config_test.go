@@ -7,17 +7,19 @@ import (
 )
 
 func TestConfigLoadDefaults(t *testing.T) {
-	// Clear env vars to ensure defaults are loaded
-	os.Unsetenv("VOC_HOST_LANG")
-	os.Unsetenv("VOC_TARGET_LANG")
-	
-	// Mock config dir to avoid messing with real config
-	tempDir, _ := os.MkdirTemp("", "voc-config-test-*")
-	defer os.RemoveAll(tempDir)
-	
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	// Stub deps to return nothing/error
+	origGetenv := getenv
+	origUserConfigDir := userConfigDir
+	origReadFile := readFile
+	defer func() {
+		getenv = origGetenv
+		userConfigDir = origUserConfigDir
+		readFile = origReadFile
+	}()
+
+	getenv = func(key string) string { return "" }
+	userConfigDir = func() (string, error) { return "", os.ErrNotExist }
+	readFile = func(name string) ([]byte, error) { return nil, os.ErrNotExist }
 
 	s, err := Load()
 	if err != nil {
@@ -33,12 +35,27 @@ func TestConfigLoadDefaults(t *testing.T) {
 }
 
 func TestConfigLoadEnv(t *testing.T) {
-	os.Setenv("VOC_HOST_LANG", "fr")
-	os.Setenv("VOC_TARGET_LANG", "es")
+	origGetenv := getenv
+	origUserConfigDir := userConfigDir
+	origReadFile := readFile
 	defer func() {
-		os.Unsetenv("VOC_HOST_LANG")
-		os.Unsetenv("VOC_TARGET_LANG")
+		getenv = origGetenv
+		userConfigDir = origUserConfigDir
+		readFile = origReadFile
 	}()
+
+	getenv = func(key string) string {
+		switch key {
+		case "VOC_HOST_LANG":
+			return "fr"
+		case "VOC_TARGET_LANG":
+			return "es"
+		}
+		return ""
+	}
+	// No config file
+	userConfigDir = func() (string, error) { return "", os.ErrNotExist }
+	readFile = func(name string) ([]byte, error) { return nil, os.ErrNotExist }
 
 	s, err := Load()
 	if err != nil {
@@ -50,6 +67,38 @@ func TestConfigLoadEnv(t *testing.T) {
 	}
 	if s.TargetLang != "es" {
 		t.Errorf("Expected target lang es from env, got %s", s.TargetLang)
+	}
+}
+
+func TestConfigLoadFile(t *testing.T) {
+	origGetenv := getenv
+	origUserConfigDir := userConfigDir
+	origReadFile := readFile
+	defer func() {
+		getenv = origGetenv
+		userConfigDir = origUserConfigDir
+		readFile = origReadFile
+	}()
+
+	getenv = func(key string) string { return "" }
+	userConfigDir = func() (string, error) { return "/mock/config", nil }
+	readFile = func(name string) ([]byte, error) {
+		if filepath.Base(name) == "settings.yaml" {
+			return []byte("host_lang: de\ntarget_lang: it"), nil
+		}
+		return nil, os.ErrNotExist
+	}
+
+	s, err := Load()
+	if err != nil {
+		t.Fatalf("Load failed: %v", err)
+	}
+
+	if s.HostLang != "de" {
+		t.Errorf("Expected host lang de from file, got %s", s.HostLang)
+	}
+	if s.TargetLang != "it" {
+		t.Errorf("Expected target lang it from file, got %s", s.TargetLang)
 	}
 }
 

@@ -13,6 +13,12 @@ type Settings struct {
 	Dictionaries map[string]string `yaml:"dictionaries"`
 }
 
+var (
+	getenv        = os.Getenv
+	userConfigDir = os.UserConfigDir
+	readFile      = os.ReadFile
+)
+
 func Load() (*Settings, error) {
 	settings := &Settings{
 		HostLang:     "en",
@@ -20,17 +26,10 @@ func Load() (*Settings, error) {
 		Dictionaries: make(map[string]string),
 	}
 
-	if lang := os.Getenv("VOC_HOST_LANG"); lang != "" {
-		settings.HostLang = lang
-	}
-	if lang := os.Getenv("VOC_TARGET_LANG"); lang != "" {
-		settings.TargetLang = lang
-	}
-
-	configDir, err := os.UserConfigDir()
+	configDir, err := userConfigDir()
 	if err == nil {
 		configPath := filepath.Join(configDir, "voc", "settings.yaml")
-		data, err := os.ReadFile(configPath)
+		data, err := readFile(configPath)
 		if err == nil {
 			var fileSettings Settings
 			if err := yaml.Unmarshal(data, &fileSettings); err == nil {
@@ -47,6 +46,13 @@ func Load() (*Settings, error) {
 				}
 			}
 		}
+	}
+
+	if lang := getenv("VOC_HOST_LANG"); lang != "" {
+		settings.HostLang = lang
+	}
+	if lang := getenv("VOC_TARGET_LANG"); lang != "" {
+		settings.TargetLang = lang
 	}
 
 	return settings, nil

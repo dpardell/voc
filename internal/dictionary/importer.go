@@ -13,23 +13,37 @@ import (
 	"path/filepath"
 	"strings"
 
-	"voc/internal/i18n"
-
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var KaikkiURL string
+
+var defaultURLs = map[string]string{
+	"en":    "https://kaikki.org/dictionary/English/kaikki.org-dictionary-English.jsonl.gz",
+	"fr":    "https://kaikki.org/dictionary/French/kaikki.org-dictionary-French.jsonl.gz",
+	"de":    "https://kaikki.org/dictionary/German/kaikki.org-dictionary-German.jsonl.gz",
+	"es":    "https://kaikki.org/dictionary/Spanish/kaikki.org-dictionary-Spanish.jsonl.gz",
+	"it":    "https://kaikki.org/dictionary/Italian/kaikki.org-dictionary-Italian.jsonl.gz",
+	"pt":    "https://kaikki.org/dictionary/Portuguese/kaikki.org-dictionary-Portuguese.jsonl.gz",
+	"pt-br": "https://kaikki.org/dictionary/Portuguese/kaikki.org-dictionary-Portuguese.jsonl.gz",
+	"cs":    "https://kaikki.org/dictionary/Czech/kaikki.org-dictionary-Czech.jsonl.gz",
+	"sk":    "https://kaikki.org/dictionary/Slovak/kaikki.org-dictionary-Slovak.jsonl.gz",
+	"ru":    "https://kaikki.org/dictionary/Russian/kaikki.org-dictionary-Russian.jsonl.gz",
+	"ja":    "https://kaikki.org/dictionary/Japanese/kaikki.org-dictionary-Japanese.jsonl.gz",
+	"zh":    "https://kaikki.org/dictionary/Chinese/kaikki.org-dictionary-Chinese.jsonl.gz",
+}
 
 func GetDefaultKaikkiURL(lang string) string {
 	if KaikkiURL != "" {
 		return KaikkiURL
 	}
 
-	// Default to Kaikki.org structure
-	// https://kaikki.org/frwiktionary/Français/kaikki.org-dictionary-Français.jsonl.gz
-	langName := i18n.GetLanguageName(lang)
-	return fmt.Sprintf("https://kaikki.org/%swiktionary/%s/kaikki.org-dictionary-%s.jsonl.gz", 
-		lang, langName, langName)
+	if url, ok := defaultURLs[lang]; ok {
+		return url
+	}
+
+	// Fallback to a best-effort URL structure if not in map
+	return fmt.Sprintf("https://kaikki.org/dictionary/%s/kaikki.org-dictionary-%s.jsonl.gz", lang, lang)
 }
 
 type Importer struct {
