@@ -150,12 +150,12 @@ func TestGetProgressPath(t *testing.T) {
 	os.Setenv("VOC_USER_DB_PATH", dbPath)
 	defer os.Unsetenv("VOC_USER_DB_PATH")
 
-	path, err := GetProgressPath()
+	path, err := GetProgressPath("fr")
 	if err != nil {
 		t.Fatalf("Failed to get progress path: %v", err)
 	}
 
-	expected := filepath.Join(tempDir, "progress.md")
+	expected := filepath.Join(tempDir, "progress_fr.md")
 	if path != expected {
 		t.Errorf("Expected progress path %s, got %s", expected, path)
 	}

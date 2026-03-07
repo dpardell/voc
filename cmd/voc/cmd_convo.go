@@ -24,7 +24,7 @@ var convoCmd = &cobra.Command{
 		}
 		defer client.Close()
 
-		progress, err := database.GetProgress()
+		progress, err := database.GetProgress(vocApp.TargetLang)
 		if err != nil {
 			return fmt.Errorf("error reading progress: %v", err)
 		}

@@ -59,13 +59,13 @@ func (d *Database) resolveDataPath(filename string) (string, error) {
 	return filepath.Join(home, ".local", "share", "voc", filename), nil
 }
 
-func GetProgressPath() (string, error) {
+func GetProgressPath(lang string) (string, error) {
 	d := &Database{}
-	return d.resolveDataPath("progress.md")
+	return d.resolveDataPath("progress_" + lang + ".md")
 }
 
-func GetProgress() (string, error) {
-	path, err := GetProgressPath()
+func GetProgress(lang string) (string, error) {
+	path, err := GetProgressPath(lang)
 	if err != nil {
 		return "", err
 	}

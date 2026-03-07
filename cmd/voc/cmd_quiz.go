@@ -34,7 +34,7 @@ func runAIQuiz(ctx context.Context) error {
 	}
 	defer client.Close()
 
-	progress, err := database.GetProgress()
+	progress, err := database.GetProgress(vocApp.TargetLang)
 	if err != nil {
 		return fmt.Errorf("error reading progress: %v", err)
 	}
@@ -60,7 +60,7 @@ func runAIQuiz(ctx context.Context) error {
 	}
 
 	if result != nil && result.NewProgress != "" {
-		progressPath, _ := database.GetProgressPath()
+		progressPath, _ := database.GetProgressPath(vocApp.TargetLang)
 		if err := os.WriteFile(progressPath, []byte(result.NewProgress), 0644); err != nil {
 			return fmt.Errorf("error saving progress file: %v", err)
 		}

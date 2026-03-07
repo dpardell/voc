@@ -141,7 +141,7 @@ Instructions:
    - "type": "multiple_choice" or "fill_in_the_blank".
    - "target_word": The word from the target list that this question is testing.
 
-Focus on variety and challenge, using the learner's progress to inform the difficulty level and which words to prioritize.
+The learner's progress is structured into Mastered / Progressing / Struggling concepts. Prioritize words and question types that target Struggling and Progressing concepts. Use Mastered concepts to set baseline difficulty.
 Return ONLY a valid JSON array of these question objects. No preamble or markdown formatting.
 `, strings.Join(words, ", "), hostLang, targetLang, progress, hostLang, targetLang, targetLang, targetLang)
 
@@ -173,12 +173,31 @@ Random sample of user's words for context:
 %s
 
 Instructions:
-1. Update the Markdown progress file to provide a HIGH-LEVEL overview of the learner's skills and standing.
-2. Focus on grammar competency, vocabulary range, estimated CEFR level, and specific strengths/weaknesses.
-3. Don't just list words; describe the *types* of words and concepts they are mastering.
-4. Be concise but insightful.
-5. Maintain a structured format (e.g., using headers, lists).
-6. Only return the NEW content of the progress file. Do not include any preamble or explanation.
+Produce a progress file with exactly this structure:
+
+## Summary
+2-3 sentences: estimated CEFR level, overall trajectory, notable strengths and gaps.
+
+## Mastered
+- **<Concept>** — <one-line note>
+  - ✓ <Specific case>
+
+## Progressing
+- **<Concept>** — <one-line note on where they slip up>
+  - ~ <Specific case they are working on>
+
+## Struggling
+- **<Concept>** — <one-line note on the core confusion>
+  - ✗ <Specific case that keeps going wrong>
+
+Rules:
+- Concepts are grammar topics or patterns (e.g. "plus-que-parfait formation", "gérondif vs. participe présent").
+- Specific cases are narrower instances within a concept (e.g. "si clause: plus-que-parfait + conditionnel passé").
+- Each concept must have at least one specific case nested under it.
+- Place every concept in exactly one of the three tiers based on the session results and existing progress.
+- If existing progress uses a different format, migrate it into this structure.
+- Do not list individual words — describe grammar concepts and patterns only.
+- Only return the file content. No preamble or explanation.
 
 Updated Progress File:
 `, currentProgress, sessionResults, strings.Join(randomWords, ", "))
@@ -188,8 +207,12 @@ Updated Progress File:
 
 func (c *MistralClient) Chat(ctx context.Context, progress string, history []Message, userMessage string, hostLang, targetLang string) (*ChatResponse, []Message, error) {
 	systemPrompt := fmt.Sprintf(`
-You are a professional language coach.
-Learner Progress: %s
+You are a professional language coach named Coach.
+
+Learner Progress (structured into Mastered / Progressing / Struggling concepts):
+%s
+
+Use this structure to tailor conversation difficulty and focus corrections on Struggling and Progressing concepts.
 
 TASK:
 Converse with the user in %s.
