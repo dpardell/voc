@@ -30,6 +30,25 @@ func TestNewApp(t *testing.T) {
 	}
 }
 
+func TestGetLLMClientMistral(t *testing.T) {
+	os.Setenv("MISTRAL_API_KEY", "test-key")
+	defer os.Unsetenv("MISTRAL_API_KEY")
+
+	// Ensure Vertex vars don't interfere
+	os.Unsetenv("VERTEX_API_KEY")
+	os.Unsetenv("GEMINI_API_KEY")
+	os.Unsetenv("VERTEX_PROJECT_ID")
+
+	a := &App{}
+	client, err := a.GetLLMClient()
+	if err != nil {
+		t.Fatalf("GetLLMClient with Mistral key returned error: %v", err)
+	}
+	if client == nil {
+		t.Fatal("expected non-nil client")
+	}
+}
+
 func TestGetLLMClientErrors(t *testing.T) {
 	app := &App{}
 

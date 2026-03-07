@@ -14,9 +14,11 @@ import (
 const mistralAPIBase = "https://api.mistral.ai/v1/chat/completions"
 
 type MistralClient struct {
-	apiKey     string
-	modelName  string
-	httpClient *http.Client
+	apiKey      string
+	modelName   string
+	httpClient  *http.Client
+	baseURL     string        // overrides mistralAPIBase when set (used in tests)
+	retryDelay  time.Duration // overrides 2s default backoff when set (used in tests)
 }
 
 func NewMistralClient(apiKey, modelName string) *MistralClient {
@@ -71,9 +73,16 @@ func (c *MistralClient) complete(ctx context.Context, messages []mistralMessage,
 
 	maxRetries := 3
 	backoff := 2 * time.Second
+	if c.retryDelay > 0 {
+		backoff = c.retryDelay
+	}
 
 	for i := range maxRetries {
-		httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, mistralAPIBase, bytes.NewReader(body))
+		apiURL := mistralAPIBase
+		if c.baseURL != "" {
+			apiURL = c.baseURL
+		}
+		httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, apiURL, bytes.NewReader(body))
 		if err != nil {
 			return "", err
 		}
