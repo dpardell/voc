@@ -140,7 +140,9 @@ func (m convoModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	m.textInput, tiCmd = m.textInput.Update(msg)
-	m.viewport, vpCmd = m.viewport.Update(msg)
+	if _, ok := msg.(tea.KeyMsg); !ok {
+		m.viewport, vpCmd = m.viewport.Update(msg)
+	}
 
 	return m, tea.Batch(tiCmd, vpCmd, spCmd)
 }
