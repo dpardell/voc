@@ -25,7 +25,7 @@ const (
 )
 
 type quizModel struct {
-	client      *llm.Client
+	client      llm.LLMClient
 	targetWords []string
 	progress    string
 	ctx         context.Context
@@ -49,7 +49,7 @@ type quizModel struct {
 	targetLang    string
 }
 
-func InitialQuizModel(client *llm.Client, targetWords []string, progress string) quizModel {
+func InitialQuizModel(client llm.LLMClient, targetWords []string, progress string) quizModel {
 	InitStyles()
 	ti := textinput.New()
 	ti.Placeholder = i18n.T(i18n.QuizPlaceholder)
@@ -308,7 +308,7 @@ type QuizResult struct {
 	NewProgress string
 }
 
-func RunQuiz(client *llm.Client, targetWords []string, progress string) (*QuizResult, error) {
+func RunQuiz(client llm.LLMClient, targetWords []string, progress string) (*QuizResult, error) {
 	m := InitialQuizModel(client, targetWords, progress)
 	p := tea.NewProgram(m, tea.WithAltScreen())
 	finalModel, err := p.Run()

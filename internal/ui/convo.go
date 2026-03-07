@@ -35,7 +35,7 @@ var (
 )
 
 type convoModel struct {
-	client       *llm.Client
+	client       llm.LLMClient
 	progress     string
 	history      []llm.Message
 	lastCorr     []llm.Correction
@@ -50,7 +50,7 @@ type convoModel struct {
 	targetLang   string
 }
 
-func InitialConvoModel(client *llm.Client, progress string) convoModel {
+func InitialConvoModel(client llm.LLMClient, progress string) convoModel {
 	InitStyles()
 	ti := textinput.New()
 	ti.Placeholder = i18n.T(i18n.ConvoPlaceholder)
@@ -233,7 +233,7 @@ func (m convoModel) View() string {
 	)
 }
 
-func RunConvo(client *llm.Client, progress string) error {
+func RunConvo(client llm.LLMClient, progress string) error {
 	p := tea.NewProgram(InitialConvoModel(client, progress), tea.WithAltScreen())
 	_, err := p.Run()
 	return err

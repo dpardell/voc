@@ -22,13 +22,21 @@ type Question struct {
 	TargetWord         string   `json:"target_word"`
 }
 
-type Client struct {
+// LLMClient is the interface satisfied by all LLM provider backends.
+type LLMClient interface {
+	GenerateQuiz(ctx context.Context, words []string, progress string, hostLang, targetLang string) ([]Question, error)
+	Chat(ctx context.Context, progress string, history []Message, userMessage string, hostLang, targetLang string) (*ChatResponse, []Message, error)
+	UpdateProgress(ctx context.Context, currentProgress string, sessionResults string, randomWords []string) (string, error)
+	Close()
+}
+
+type GeminiClient struct {
 	client    *genai.Client
 	model     *genai.GenerativeModel
 	modelName string
 }
 
-func NewClient(apiKey, projectID, location, modelName string) (*Client, error) {
+func NewGeminiClient(apiKey, projectID, location, modelName string) (*GeminiClient, error) {
 	ctx := context.Background()
 	client, err := genai.NewClient(ctx, projectID, location, option.WithAPIKey(apiKey))
 	if err != nil {
@@ -42,14 +50,14 @@ func NewClient(apiKey, projectID, location, modelName string) (*Client, error) {
 	model := client.GenerativeModel(modelName)
 	model.ResponseMIMEType = "application/json"
 
-	return &Client{
+	return &GeminiClient{
 		client:    client,
 		model:     model,
 		modelName: modelName,
 	}, nil
 }
 
-func (c *Client) Close() {
+func (c *GeminiClient) Close() {
 	c.client.Close()
 }
 
@@ -73,7 +81,7 @@ func sanitizeJSON(text string) string {
 	return text
 }
 
-func (c *Client) generateWithRetry(ctx context.Context, model *genai.GenerativeModel, prompt string) (*genai.GenerateContentResponse, error) {
+func (c *GeminiClient) generateWithRetry(ctx context.Context, model *genai.GenerativeModel, prompt string) (*genai.GenerateContentResponse, error) {
 	var resp *genai.GenerateContentResponse
 	var err error
 	maxRetries := 3
@@ -97,7 +105,7 @@ func (c *Client) generateWithRetry(ctx context.Context, model *genai.GenerativeM
 	return nil, err
 }
 
-func (c *Client) GenerateQuiz(ctx context.Context, words []string, progress string, hostLang, targetLang string) ([]Question, error) {
+func (c *GeminiClient) GenerateQuiz(ctx context.Context, words []string, progress string, hostLang, targetLang string) ([]Question, error) {
 	prompt := fmt.Sprintf(`
 You are a language teacher creating an interactive vocabulary quiz.
 Generate a quiz for the following target words: %s.
@@ -164,7 +172,7 @@ type ChatResponse struct {
 	Corrections []Correction `json:"corrections"` // Suggestions or corrections for the user's last message
 }
 
-func (c *Client) UpdateProgress(ctx context.Context, currentProgress string, sessionResults string, randomWords []string) (string, error) {
+func (c *GeminiClient) UpdateProgress(ctx context.Context, currentProgress string, sessionResults string, randomWords []string) (string, error) {
 	// Create a temporary model without JSON constraint for the progress update
 	updateModel := c.client.GenerativeModel(c.modelName)
 	updateModel.ResponseMIMEType = "text/plain"
@@ -217,7 +225,7 @@ type Message struct {
 	Content string
 }
 
-func (c *Client) Chat(ctx context.Context, progress string, history []Message, userMessage string, hostLang, targetLang string) (*ChatResponse, []Message, error) {
+func (c *GeminiClient) Chat(ctx context.Context, progress string, history []Message, userMessage string, hostLang, targetLang string) (*ChatResponse, []Message, error) {
 	chatModel := c.client.GenerativeModel(c.modelName)
 	chatModel.ResponseMIMEType = "application/json"
 

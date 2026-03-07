@@ -66,7 +66,11 @@ func (a *App) ReinitDict() error {
 	return nil
 }
 
-func (a *App) GetLLMClient() (*llm.Client, error) {
+func (a *App) GetLLMClient() (llm.LLMClient, error) {
+	if mistralKey := os.Getenv("MISTRAL_API_KEY"); mistralKey != "" {
+		return llm.NewMistralClient(mistralKey, os.Getenv("MISTRAL_MODEL")), nil
+	}
+
 	apiKey := os.Getenv("VERTEX_API_KEY")
 	if apiKey == "" {
 		apiKey = os.Getenv("GEMINI_API_KEY")
@@ -84,5 +88,5 @@ func (a *App) GetLLMClient() (*llm.Client, error) {
 		return nil, fmt.Errorf("%s", i18n.T(i18n.LLMVarsMissing))
 	}
 
-	return llm.NewClient(apiKey, projectID, location, modelName)
+	return llm.NewGeminiClient(apiKey, projectID, location, modelName)
 }

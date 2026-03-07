@@ -125,7 +125,7 @@ var en = map[StringID]string{
 	QuizUpdating:           "Updating progress...",
 	QuizHintType:           "Type your answer and press Enter",
 	NoWordsToQuiz:          "No words to quiz.",
-	LLMVarsMissing:         "VERTEX_API_KEY and VERTEX_PROJECT_ID must be set",
+	LLMVarsMissing:         "Set MISTRAL_API_KEY, or set VERTEX_API_KEY (or GEMINI_API_KEY) and VERTEX_PROJECT_ID",
 }
 
 var fr = map[StringID]string{
@@ -184,7 +184,7 @@ var fr = map[StringID]string{
 	QuizUpdating:           "Mise à jour de la progression...",
 	QuizHintType:           "Tapez votre réponse et appuyez sur Entrée",
 	NoWordsToQuiz:          "Aucun mot pour le quiz.",
-	LLMVarsMissing:         "VERTEX_API_KEY et VERTEX_PROJECT_ID doivent être définis",
+	LLMVarsMissing:         "Définissez MISTRAL_API_KEY, ou VERTEX_API_KEY (ou GEMINI_API_KEY) et VERTEX_PROJECT_ID",
 }
 
 var cs = map[StringID]string{
@@ -243,7 +243,7 @@ var cs = map[StringID]string{
 	QuizUpdating:           "Aktualizace pokroku...",
 	QuizHintType:           "Napište svou odpověď a stiskněte Enter",
 	NoWordsToQuiz:          "Žádná slova pro kvíz.",
-	LLMVarsMissing:         "VERTEX_API_KEY a VERTEX_PROJECT_ID musí být nastaveny",
+	LLMVarsMissing:         "Nastavte MISTRAL_API_KEY, nebo VERTEX_API_KEY (nebo GEMINI_API_KEY) a VERTEX_PROJECT_ID",
 }
 
 var sk = map[StringID]string{
@@ -302,7 +302,7 @@ var sk = map[StringID]string{
 	QuizUpdating:           "Aktualizácia pokroku...",
 	QuizHintType:           "Napíšte svoju odpoveď a stlačte Enter",
 	NoWordsToQuiz:          "Žiadne slová pre kvíz.",
-	LLMVarsMissing:         "VERTEX_API_KEY a VERTEX_PROJECT_ID musia byť nastavené",
+	LLMVarsMissing:         "Nastavte MISTRAL_API_KEY, alebo VERTEX_API_KEY (alebo GEMINI_API_KEY) a VERTEX_PROJECT_ID",
 }
 
 var es = map[StringID]string{
@@ -361,7 +361,7 @@ var es = map[StringID]string{
 	QuizUpdating:           "Actualizando progreso...",
 	QuizHintType:           "Escriba su respuesta y presione Enter",
 	NoWordsToQuiz:          "No hay palabras para el cuestionario.",
-	LLMVarsMissing:         "VERTEX_API_KEY y VERTEX_PROJECT_ID deben estar configurados",
+	LLMVarsMissing:         "Configure MISTRAL_API_KEY, o configure VERTEX_API_KEY (o GEMINI_API_KEY) y VERTEX_PROJECT_ID",
 }
 
 var de = map[StringID]string{
@@ -420,7 +420,7 @@ var de = map[StringID]string{
 	QuizUpdating:           "Fortschritt wird aktualisiert...",
 	QuizHintType:           "Geben Sie Ihre Antwort ein und drücken Sie Enter",
 	NoWordsToQuiz:          "Keine Wörter für das Quiz.",
-	LLMVarsMissing:         "VERTEX_API_KEY und VERTEX_PROJECT_ID müssen gesetzt sein",
+	LLMVarsMissing:         "Setzen Sie MISTRAL_API_KEY, oder VERTEX_API_KEY (oder GEMINI_API_KEY) und VERTEX_PROJECT_ID",
 }
 
 var pt = map[StringID]string{
@@ -479,7 +479,7 @@ var pt = map[StringID]string{
 	QuizUpdating:           "A atualizar progresso...",
 	QuizHintType:           "Escreva a sua resposta e pressione Enter",
 	NoWordsToQuiz:          "Sem palavras para o questionário.",
-	LLMVarsMissing:         "VERTEX_API_KEY e VERTEX_PROJECT_ID devem estar configurados",
+	LLMVarsMissing:         "Defina MISTRAL_API_KEY, ou VERTEX_API_KEY (ou GEMINI_API_KEY) e VERTEX_PROJECT_ID",
 }
 
 var ptBR = map[StringID]string{
@@ -538,7 +538,7 @@ var ptBR = map[StringID]string{
 	QuizUpdating:           "Atualizando progresso...",
 	QuizHintType:           "Escreva sua resposta e pressione Enter",
 	NoWordsToQuiz:          "Sem palavras para o quiz.",
-	LLMVarsMissing:         "VERTEX_API_KEY e VERTEX_PROJECT_ID devem estar configurados",
+	LLMVarsMissing:         "Defina MISTRAL_API_KEY, ou VERTEX_API_KEY (ou GEMINI_API_KEY) e VERTEX_PROJECT_ID",
 }
 
 var activeHostLang = "en"
