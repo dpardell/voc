@@ -11,26 +11,29 @@ func TestQuizModel(t *testing.T) {
 	questions := []llm.Question{
 		{
 			Type:               "multiple_choice",
-			Question:           "What is apple?",
-			Options:            []string{"fruit", "car", "phone", "building"},
+			Question:           "Elle ___ (aller) au marché chaque semaine.",
+			Options:            []string{"va", "allait", "ira", "est allée"},
 			CorrectAnswerIndex: 0,
-			CorrectAnswer:      "fruit",
+			CorrectAnswer:      "va",
+			TargetWord:         "aller",
 		},
 		{
-			Type:          "fill_in_the_blank",
-			Question:      "A ___ is a red fruit.",
-			CorrectAnswer: "cherry",
+			Type:               "multiple_choice",
+			Question:           "Which option correctly completes: \"Si j'avais le temps, je ___ voyager.\"",
+			Options:            []string{"voudrais", "voulais", "veux", "voudrai"},
+			CorrectAnswerIndex: 0,
+			CorrectAnswer:      "voudrais",
+			TargetWord:         "vouloir",
 		},
 	}
 
-	// Mocking LLM client is hard here, so we manually transition to answering state
+	// Manually transition to answering state (bypasses LLM)
 	m := InitialQuizModel(nil, nil, "")
 	m.questions = questions
 	m.results = make([]bool, len(questions))
 	m.state = stateAnswering
-	m.textInput.Focus()
 
-	// Test multiple choice - correct answer
+	// Test correct answer on first question
 	m2, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("1")})
 	qm := m2.(quizModel)
 	if qm.score != 1 {
@@ -50,18 +53,17 @@ func TestQuizModel(t *testing.T) {
 		t.Errorf("State should be stateAnswering, got %v", qm.state)
 	}
 
-	// Test fill in the blank - correct answer
-	qm.textInput.SetValue("cherry")
-	m4, _ := qm.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	// Test wrong answer on second question
+	m4, _ := qm.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("2")})
 	qm = m4.(quizModel)
-	if qm.score != 2 {
-		t.Errorf("Score should be 2, got %d", qm.score)
+	if qm.score != 1 {
+		t.Errorf("Score should still be 1, got %d", qm.score)
 	}
 	if qm.state != stateFeedback {
 		t.Errorf("State should be stateFeedback, got %v", qm.state)
 	}
 
-	// Move to next state (updating)
+	// Move to next state (updating) after last question
 	m5, _ := qm.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	qm = m5.(quizModel)
 	if qm.state != stateUpdating {

@@ -9,7 +9,6 @@ import (
 	"voc/internal/llm"
 
 	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -39,7 +38,6 @@ type quizModel struct {
 	quitted   bool
 	width     int
 	height    int
-	textInput textinput.Model
 	spinner   spinner.Model
 	err       error
 
@@ -51,11 +49,6 @@ type quizModel struct {
 
 func InitialQuizModel(client llm.LLMClient, targetWords []string, progress string) quizModel {
 	InitStyles()
-	ti := textinput.New()
-	ti.Placeholder = i18n.T(i18n.QuizPlaceholder)
-	ti.CharLimit = 156
-	ti.Width = 30
-
 	s := GetSpinner()
 
 	return quizModel{
@@ -65,7 +58,6 @@ func InitialQuizModel(client llm.LLMClient, targetWords []string, progress strin
 		ctx:         context.Background(),
 		state:       stateGenerating,
 		selected:    -1,
-		textInput:   ti,
 		spinner:     s,
 		hostLang:    i18n.GetLanguageName(i18n.GetHostLanguage()),
 		targetLang:  i18n.GetLanguageName(i18n.GetTargetLanguage()),
@@ -102,10 +94,7 @@ func (m quizModel) Init() tea.Cmd {
 }
 
 func (m quizModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var (
-		tiCmd tea.Cmd
-		spCmd tea.Cmd
-	)
+	var spCmd tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -121,9 +110,6 @@ func (m quizModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.questions = msg
 		m.results = make([]bool, len(m.questions))
 		m.state = stateAnswering
-		if m.questions[0].Type == "fill_in_the_blank" {
-			m.textInput.Focus()
-		}
 		return m, nil
 
 	case updateMsg:
@@ -146,13 +132,13 @@ func (m quizModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case "q":
-			if m.state == stateAnswering && m.questions[m.index].Type != "fill_in_the_blank" {
+			if m.state == stateAnswering {
 				m.quitted = true
 				return m, tea.Quit
 			}
 
 		case "1", "2", "3", "4":
-			if m.state == stateAnswering && m.questions[m.index].Type == "multiple_choice" {
+			if m.state == stateAnswering {
 				m.selected = int(msg.String()[0]-'1')
 				if m.selected == m.questions[m.index].CorrectAnswerIndex {
 					m.score++
@@ -165,29 +151,11 @@ func (m quizModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "enter":
-			if m.state == stateAnswering && m.questions[m.index].Type == "fill_in_the_blank" {
-				answer := strings.TrimSpace(strings.ToLower(m.textInput.Value()))
-				correct := strings.TrimSpace(strings.ToLower(m.questions[m.index].CorrectAnswer))
-				if answer == correct {
-					m.score++
-					m.results[m.index] = true
-				} else {
-					m.results[m.index] = false
-				}
-				m.state = stateFeedback
-				m.textInput.Blur()
-				return m, nil
-			}
-
 			if m.state == stateFeedback {
 				if m.index < len(m.questions)-1 {
 					m.index++
 					m.selected = -1
 					m.state = stateAnswering
-					m.textInput.Reset()
-					if m.questions[m.index].Type == "fill_in_the_blank" {
-						m.textInput.Focus()
-					}
 				} else {
 					// Format results and start update
 					var sessionResults strings.Builder
@@ -211,11 +179,7 @@ func (m quizModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	if m.state == stateAnswering && m.questions[m.index].Type == "fill_in_the_blank" {
-		m.textInput, tiCmd = m.textInput.Update(msg)
-	}
-
-	return m, tea.Batch(tiCmd, spCmd)
+	return m, spCmd
 }
 
 func (m quizModel) View() string {
@@ -255,34 +219,28 @@ func (m quizModel) View() string {
 		Width(m.width - 4).
 		Render(q.Question)
 
-	var optionsView string
-	if q.Type == "multiple_choice" {
-		var options []string
-		for i, opt := range q.Options {
-			prefix := fmt.Sprintf("%d) ", i+1)
-			style := itemStyle
-			
-			if m.state == stateFeedback {
-				if i == q.CorrectAnswerIndex {
-					style = correctStyle
-					prefix = "✅ "
-				} else if i == m.selected {
-					style = wrongStyle
-					prefix = "❌ "
-				} else {
-					style = subtleStyle
-				}
-			} else if i == m.selected {
-				style = selectedItemStyle
-			}
+	var options []string
+	for i, opt := range q.Options {
+		prefix := fmt.Sprintf("%d) ", i+1)
+		style := itemStyle
 
-			options = append(options, style.Render(prefix+opt))
+		if m.state == stateFeedback {
+			if i == q.CorrectAnswerIndex {
+				style = correctStyle
+				prefix = "✅ "
+			} else if i == m.selected {
+				style = wrongStyle
+				prefix = "❌ "
+			} else {
+				style = subtleStyle
+			}
+		} else if i == m.selected {
+			style = selectedItemStyle
 		}
-		optionsView = strings.Join(options, "\n")
-	} else {
-		// Fill in the blank
-		optionsView = m.textInput.View()
+
+		options = append(options, style.Render(prefix+opt))
 	}
+	optionsView := strings.Join(options, "\n")
 
 	feedback := ""
 	if m.state == stateFeedback {
@@ -294,9 +252,6 @@ func (m quizModel) View() string {
 	}
 
 	hints := hintStyle.Render(i18n.T(i18n.HintsQuiz))
-	if q.Type == "fill_in_the_blank" && m.state == stateAnswering {
-		hints = hintStyle.Render(i18n.T(i18n.QuizHintType))
-	}
 
 	return fmt.Sprintf("\n%s %s\n%s\n%s\n\n%s\n%s\n\n%s", title, score, header, questionText, optionsView, feedback, hints)
 }

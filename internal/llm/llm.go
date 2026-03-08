@@ -107,36 +107,34 @@ func (c *GeminiClient) generateWithRetry(ctx context.Context, model *genai.Gener
 
 func (c *GeminiClient) GenerateQuiz(ctx context.Context, words []string, progress string, hostLang, targetLang string) ([]Question, error) {
 	prompt := fmt.Sprintf(`
-You are a language teacher creating an interactive vocabulary quiz.
-Generate a quiz for the following target words: %s.
+You are a language teacher designing intentional grammar and vocabulary practice.
 
 Host Language (Learner's native/UI language): %s
 Target Language (Language being learned): %s
+Vocabulary pool (use these words as raw material): %s
 
-Current learner progress:
+Learner's current progress:
 %s
 
-Instructions:
-1. Include two types of questions: "multiple_choice" and "fill_in_the_blank".
-2. Ensure a mix of questions. Some should be translation-based (%s to %s or vice versa), 
-   while others should be entirely in %s (e.g., fill in the blank in a sentence, 
-   choosing the correct conjugation, or matching a %s definition to a word).
-3. "multiple_choice" questions should have:
-   - "question": The question text.
-   - "options": An array of 4 possible answers.
-   - "correct_answer_index": The 0-based index of the correct answer.
-   - "correct_answer": The literal text of the correct answer.
-4. "fill_in_the_blank" questions should have:
-   - "question": A sentence with a blank (use "___") or a prompt.
-   - "correct_answer": The exact word or phrase that fills the blank.
-   - "options": Should be null or empty.
-5. All questions must include:
-   - "type": "multiple_choice" or "fill_in_the_blank".
-   - "target_word": The word from the target list that this question is testing.
+Generate 5 multiple-choice questions that test grammar patterns and contextual usage, NOT simple word recall or translation. Use the vocabulary words as vehicles for testing the grammar concepts marked as Struggling and Progressing above.
 
-The learner's progress is structured into Mastered / Progressing / Struggling concepts. Prioritize words and question types that target Struggling and Progressing concepts. Use Mastered concepts to set baseline difficulty.
-Return ONLY a valid JSON array of these question objects. No preamble or markdown formatting.
-`, strings.Join(words, ", "), hostLang, targetLang, progress, hostLang, targetLang, targetLang, targetLang)
+Question design principles:
+- Prefer sentence-completion questions: write a sentence in %s with a blank (use "___"), and provide 4 choices that differ in grammar (e.g. conjugation, tense, agreement, preposition). The learner picks the correct form.
+- Also include questions that test usage in context: show a sentence using one of the words and ask something about the grammar (e.g. "What tense is used here?", "Which option correctly completes this sentence?").
+- Avoid simple "what does X mean?" translation questions — these test memory, not understanding.
+- Make distractors plausible: wrong answers should be grammatically close (wrong tense, wrong gender agreement, wrong preposition), not random.
+- Write question text in %s when asking about grammar concepts; write it in %s when testing comprehension in context.
+
+All 5 questions must be "multiple_choice" with exactly 4 options. Each must include:
+- "type": "multiple_choice"
+- "question": the question or sentence with blank
+- "options": array of 4 strings
+- "correct_answer_index": 0-based index of the correct option
+- "correct_answer": the literal text of the correct option
+- "target_word": the word from the vocabulary pool this question relates to
+
+Return ONLY a valid JSON array of these 5 question objects. No preamble or markdown.
+`, hostLang, targetLang, strings.Join(words, ", "), progress, targetLang, hostLang, targetLang)
 
 	resp, err := c.generateWithRetry(ctx, c.model, prompt)
 	if err != nil {
