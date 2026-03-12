@@ -51,11 +51,17 @@ Requirements: Go 1.25+
 
 Voc uses environment variables for runtime configuration. You can also use a `settings.yaml` file in your user config directory.
 
-- **AI Features (Required for Quiz/Convo)**:
-  - `VERTEX_API_KEY`: Your Google Vertex AI/Gemini API key (falls back to `GEMINI_API_KEY`).
-  - `VERTEX_PROJECT_ID`: **Required.** Your Google Cloud Project ID.
-  - `VERTEX_LOCATION`: Google Cloud Region (default: `us-central1`).
-  - `VERTEX_MODEL`: The model ID to use (default: `gemini-2.5-flash-lite`).
+- **AI Features (Required for Quiz/Convo)** — choose one provider:
+  - **Mistral** (simpler setup):
+    - `MISTRAL_API_KEY`: Your Mistral API key.
+    - `MISTRAL_MODEL`: Model to use (default: `mistral-small-latest`).
+  - **Google Vertex AI / Gemini**:
+    - `VERTEX_API_KEY`: Your Google Vertex AI/Gemini API key (falls back to `GEMINI_API_KEY`).
+    - `VERTEX_PROJECT_ID`: **Required.** Your Google Cloud Project ID.
+    - `VERTEX_LOCATION`: Google Cloud Region (default: `us-central1`).
+    - `VERTEX_MODEL`: The model ID to use (default: `gemini-2.5-flash-lite`).
+
+  If `MISTRAL_API_KEY` is set, it takes priority over Vertex AI.
 
 - **Application Settings**:
   - `VOC_HOST_LANG`: The language of the UI (e.g., `en`, `fr`).
