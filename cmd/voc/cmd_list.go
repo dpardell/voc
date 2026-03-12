@@ -17,16 +17,14 @@ func init() {
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all saved words",
-	Run: func(cmd *cobra.Command, args []string) {
-		words, err := db.GetAllWords()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		words, err := vocApp.DB.GetAllWords(vocApp.TargetLang)
 		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-			return
+			return err
 		}
 
 		if len(words) == 0 {
-			fmt.Println("No words in dictionary.")
-			return
+			return fmt.Errorf("%s", i18n.T(i18n.ErrorNoSavedWords))
 		}
 
 		var wordStrings []string
@@ -49,34 +47,34 @@ var listCmd = &cobra.Command{
 		}
 
 		defFunc := func(w string) (string, error) {
-			if dict == nil {
-				return "", fmt.Errorf("dictionary not loaded")
+			if vocApp.Dict == nil {
+				return "", fmt.Errorf("%s", i18n.T(i18n.DictionaryLoading))
 			}
-			return dict.Definition(w)
+			return vocApp.Dict.Definition(w)
 		}
 
 		checkVocabFunc := func(word string) (bool, error) {
-			return db.WordExists(word)
+			return vocApp.DB.WordExists(word, vocApp.TargetLang)
 		}
 
 		toggleVocabFunc := func(word string) (bool, error) {
-			exists, err := db.WordExists(word)
+			exists, err := vocApp.DB.WordExists(word, vocApp.TargetLang)
 			if err != nil {
 				return false, err
 			}
 
 			if exists {
-				if err := db.DeleteWord(word); err != nil {
+				if err := vocApp.DB.DeleteWord(word, vocApp.TargetLang); err != nil {
 					return true, err
 				}
 				return false, nil
 			}
 
 			// Add back to vocab
-			if dict == nil {
-				return false, fmt.Errorf("dictionary not loaded")
+			if vocApp.Dict == nil {
+				return false, fmt.Errorf("%s", i18n.T(i18n.DictionaryLoading))
 			}
-			defData, err := dict.Lookup(word)
+			defData, err := vocApp.Dict.Lookup(word)
 			if err != nil {
 				return false, err
 			}
@@ -92,7 +90,7 @@ var listCmd = &cobra.Command{
 				})
 			}
 
-			if err := db.AddWord(word, dbTypes, false); err != nil {
+			if err := vocApp.DB.AddWord(word, vocApp.TargetLang, dbTypes, false); err != nil {
 				return false, err
 			}
 			return true, nil
@@ -100,8 +98,8 @@ var listCmd = &cobra.Command{
 
 		_, err = ui.RunFuzzyFinder(i18n.T(i18n.WordCount, len(wordStrings)), wordStrings, searchFunc, defFunc, checkVocabFunc, toggleVocabFunc)
 		if err != nil {
-			fmt.Printf("Err: %v\n", err)
-			return
+			return err
 		}
+		return nil
 	},
 }

@@ -90,7 +90,7 @@ func (d *Dictionary) Lookup(word string) (*DefinitionData, error) {
 	}
 
 	if len(typeMap) == 0 {
-		return nil, nil // Not found
+		return nil, nil
 	}
 
 	var data DefinitionData
@@ -132,7 +132,6 @@ func (d *Dictionary) Search(query string, limit int) ([]string, error) {
 		results = append(results, w)
 	}
 
-	// return results[:min(len(results), limit)], nil
 	return results, nil
 }
 

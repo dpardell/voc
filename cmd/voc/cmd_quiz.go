@@ -1,11 +1,13 @@
 package main
 
 import (
-	"bufio"
+	"context"
 	"fmt"
-	"math/rand"
 	"os"
-	"time"
+
+	"voc/internal/database"
+	"voc/internal/i18n"
+	"voc/internal/ui"
 
 	"github.com/spf13/cobra"
 )
@@ -17,52 +19,51 @@ func init() {
 var quizCmd = &cobra.Command{
 	Use:   "quiz",
 	Short: "Interactive quiz mode",
-	Run: func(cmd *cobra.Command, args []string) {
-		words, err := db.GetAllWords()
-		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-			return
-		}
-
-		if len(words) == 0 {
-			fmt.Println("No words to quiz.")
-			return
-		}
-
-		rand.Seed(time.Now().UnixNano())
-		perm := rand.Perm(len(words))
-
-		fmt.Println("Quiz mode - Press Enter to see definition, Ctrl+C to exit")
-		fmt.Println()
-
-		scanner := bufio.NewScanner(os.Stdin)
-
-		for _, idx := range perm {
-			w := words[idx]
-
-			// Fetch full details
-			fullWord, err := db.GetWord(w.Word)
-			if err != nil || fullWord == nil || len(fullWord.Types) == 0 {
-				continue
-			}
-
-			// Random type
-			typeIdx := rand.Intn(len(fullWord.Types))
-			t := fullWord.Types[typeIdx]
-
-			fmt.Printf("Word: %s (%s)\n", fullWord.Word, t.Type)
-			fmt.Print("Press Enter to see definition... ")
-			scanner.Scan()
-
-			fmt.Println("Definition:")
-			for _, d := range t.Definitions {
-				fmt.Printf("  - %s\n", d)
-			}
-			fmt.Println()
-			fmt.Print("Press Enter for next word... ")
-			scanner.Scan()
-			fmt.Println()
-		}
-		fmt.Println("Quiz ended.")
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runAIQuiz(cmd.Context())
 	},
+}
+
+func runAIQuiz(ctx context.Context) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	client, err := vocApp.GetLLMClient()
+	if err != nil {
+		return fmt.Errorf("LLM error: %v (Set VERTEX_API_KEY and VERTEX_PROJECT_ID)", err)
+	}
+	defer client.Close()
+
+	progress, err := database.GetProgress(vocApp.TargetLang)
+	if err != nil {
+		return fmt.Errorf("error reading progress: %v", err)
+	}
+
+	// Fetch 10 random words for the quiz in the target language
+	words, err := vocApp.DB.GetRandomWords(vocApp.TargetLang, 10)
+	if err != nil {
+		return fmt.Errorf("error fetching words: %v", err)
+	}
+
+	if len(words) < 4 {
+		return fmt.Errorf("%s", i18n.T(i18n.ErrorNoWords))
+	}
+
+	var targetWords []string
+	for _, w := range words {
+		targetWords = append(targetWords, w.Word)
+	}
+
+	result, err := ui.RunQuiz(client, targetWords, progress)
+	if err != nil {
+		return fmt.Errorf("error running quiz: %v", err)
+	}
+
+	if result != nil && result.NewProgress != "" {
+		progressPath, _ := database.GetProgressPath(vocApp.TargetLang)
+		if err := os.WriteFile(progressPath, []byte(result.NewProgress), 0644); err != nil {
+			return fmt.Errorf("error saving progress file: %v", err)
+		}
+	}
+	return nil
 }

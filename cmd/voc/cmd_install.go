@@ -18,11 +18,17 @@ func init() {
 
 var installDictCmd = &cobra.Command{
 	Use:   "install-dict",
-	Short: "Download and install the French dictionary",
-	Run: func(cmd *cobra.Command, args []string) {
+	Short: "Download and install the dictionary for the target language",
+	RunE: func(cmd *cobra.Command, args []string) error {
 		force, _ := cmd.Flags().GetBool("force")
 
-		url := dictionary.KaikkiURL
+		url := dictionary.GetDefaultKaikkiURL(vocApp.TargetLang)
+		if vocApp.Settings != nil && vocApp.Settings.Dictionaries != nil {
+			if dURL, ok := vocApp.Settings.Dictionaries[vocApp.TargetLang]; ok {
+				url = dURL
+			}
+		}
+
 		reader := bufio.NewReader(os.Stdin)
 
 		for {
@@ -34,28 +40,26 @@ var installDictCmd = &cobra.Command{
 				break
 			}
 			if input == "n" {
-				fmt.Println(i18n.T(i18n.InstallCancelled))
-				return
+				return fmt.Errorf("%s", i18n.T(i18n.InstallCancelled))
 			}
 			if input == "c" {
 				fmt.Print(i18n.T(i18n.PromptCustomURL))
 				input, _ = reader.ReadString('\n')
 				url = strings.TrimSpace(input)
 				if url == "" {
-					fmt.Println(i18n.T(i18n.InstallCancelled))
-					return
+					return fmt.Errorf("%s", i18n.T(i18n.InstallCancelled))
 				}
 				break
 			}
 		}
 
-		importer, err := dictionary.NewImporter(i18n.GetLanguage())
+		importer, err := dictionary.NewImporter(vocApp.TargetLang)
 		if err != nil {
-			fmt.Printf("Err: %v\n", err)
-			return
+			return err
 		}
-		if err := importer.DownloadAndImport(force, url); err != nil {
-			fmt.Printf("Err: %v\n", err)
+		if err := importer.DownloadAndImport(cmd.Context(), force, url); err != nil {
+			return err
 		}
+		return nil
 	},
 }

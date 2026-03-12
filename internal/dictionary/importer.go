@@ -3,6 +3,7 @@ package dictionary
 import (
 	"bufio"
 	"compress/gzip"
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -17,13 +18,40 @@ import (
 
 var KaikkiURL string
 
+var defaultURLs = map[string]string{
+	"en":    "https://kaikki.org/dictionary/English/kaikki.org-dictionary-English.jsonl.gz",
+	"fr":    "https://kaikki.org/dictionary/French/kaikki.org-dictionary-French.jsonl.gz",
+	"de":    "https://kaikki.org/dictionary/German/kaikki.org-dictionary-German.jsonl.gz",
+	"es":    "https://kaikki.org/dictionary/Spanish/kaikki.org-dictionary-Spanish.jsonl.gz",
+	"it":    "https://kaikki.org/dictionary/Italian/kaikki.org-dictionary-Italian.jsonl.gz",
+	"pt":    "https://kaikki.org/dictionary/Portuguese/kaikki.org-dictionary-Portuguese.jsonl.gz",
+	"pt-br": "https://kaikki.org/dictionary/Portuguese/kaikki.org-dictionary-Portuguese.jsonl.gz",
+	"cs":    "https://kaikki.org/dictionary/Czech/kaikki.org-dictionary-Czech.jsonl.gz",
+	"sk":    "https://kaikki.org/dictionary/Slovak/kaikki.org-dictionary-Slovak.jsonl.gz",
+	"ru":    "https://kaikki.org/dictionary/Russian/kaikki.org-dictionary-Russian.jsonl.gz",
+	"ja":    "https://kaikki.org/dictionary/Japanese/kaikki.org-dictionary-Japanese.jsonl.gz",
+	"zh":    "https://kaikki.org/dictionary/Chinese/kaikki.org-dictionary-Chinese.jsonl.gz",
+}
+
+func GetDefaultKaikkiURL(lang string) string {
+	if KaikkiURL != "" {
+		return KaikkiURL
+	}
+
+	if url, ok := defaultURLs[lang]; ok {
+		return url
+	}
+
+	// Fallback to a best-effort URL structure if not in map
+	return fmt.Sprintf("https://kaikki.org/dictionary/%s/kaikki.org-dictionary-%s.jsonl.gz", lang, lang)
+}
+
 type Importer struct {
 	DictDir   string
 	DictDB    string
 	CacheFile string
+	Lang      string
 }
-
-// TODO: Need to go over this file and see if there is a better way
 
 func NewImporter(lang string) (*Importer, error) {
 	dbPath, err := GetDictionaryPath(lang)
@@ -39,20 +67,26 @@ func NewImporter(lang string) (*Importer, error) {
 	return &Importer{
 		DictDir:   dictDir,
 		DictDB:    dbPath,
-		CacheFile: filepath.Join(dictDir, "kaikki-francais.jsonl"),
+		CacheFile: filepath.Join(dictDir, fmt.Sprintf("kaikki-%s.jsonl", lang)),
+		Lang:      lang,
 	}, nil
 }
 
-func (i *Importer) DownloadAndImport(force bool, url string) error {
+func (i *Importer) DownloadAndImport(ctx context.Context, force bool, url string) error {
 	if _, err := os.Stat(i.CacheFile); err == nil && !force {
 		fmt.Println("Using cached dictionary file...")
 		fmt.Println("  (use --force to re-download)")
-		return i.importFile()
+		return i.importFile(ctx)
 	}
 
-	fmt.Printf("Downloading French dictionary from %s...\n", url)
+	fmt.Printf("Downloading %s dictionary from %s...\n", i.Lang, url)
 
-	resp, err := http.Get(url)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("download failed: %v", err)
 	}
@@ -62,12 +96,26 @@ func (i *Importer) DownloadAndImport(force bool, url string) error {
 		return fmt.Errorf("download failed with status: %s", resp.Status)
 	}
 
-	fmt.Println("Decompressing and saving...")
-	gzReader, err := gzip.NewReader(resp.Body)
-	if err != nil {
-		return err
+	// Use a buffered reader to peek at the magic bytes
+	reader := bufio.NewReader(resp.Body)
+	isGzip := false
+	peek, err := reader.Peek(2)
+	if err == nil && peek[0] == 0x1f && peek[1] == 0x8b {
+		isGzip = true
 	}
-	defer gzReader.Close()
+
+	var finalReader io.Reader = reader
+	if isGzip {
+		fmt.Println("Decompressing and saving...")
+		gzReader, err := gzip.NewReader(reader)
+		if err != nil {
+			return err
+		}
+		defer gzReader.Close()
+		finalReader = gzReader
+	} else {
+		fmt.Println("Saving...")
+	}
 
 	outFile, err := os.Create(i.CacheFile)
 	if err != nil {
@@ -75,24 +123,28 @@ func (i *Importer) DownloadAndImport(force bool, url string) error {
 	}
 	defer outFile.Close()
 
-	_, err = io.Copy(outFile, gzReader)
+	_, err = io.Copy(outFile, finalReader)
 	if err != nil {
 		return err
 	}
 
-	return i.importFile()
+	return i.importFile(ctx)
 }
 
-func (i *Importer) importFile() error {
+func (i *Importer) importFile(ctx context.Context) error {
 	fmt.Println("Importing into database...")
 
-	os.Remove(i.DictDB)
+	tempDBPath := i.DictDB + ".tmp"
+	os.Remove(tempDBPath)
 
-	db, err := sql.Open("sqlite3", i.DictDB)
+	db, err := sql.Open("sqlite3", tempDBPath)
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func() {
+		db.Close()
+		os.Remove(tempDBPath) // Cleanup if we fail before rename
+	}()
 
 	if _, err := db.Exec(`
 		CREATE TABLE dictionary (word TEXT NOT NULL, pos TEXT, gloss TEXT NOT NULL);
@@ -133,6 +185,12 @@ func (i *Importer) importFile() error {
 	count := 0
 
 	for scanner.Scan() {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
 		var entry struct {
 			Word     string `json:"word"`
 			LangCode string `json:"lang_code"`
@@ -146,7 +204,7 @@ func (i *Importer) importFile() error {
 			continue
 		}
 
-		if entry.LangCode != "fr" || entry.Word == "" {
+		if entry.LangCode != i.Lang || entry.Word == "" {
 			continue
 		}
 
@@ -177,6 +235,12 @@ func (i *Importer) importFile() error {
 
 	if err := tx.Commit(); err != nil {
 		return err
+	}
+
+	db.Close() // Close before rename
+
+	if err := os.Rename(tempDBPath, i.DictDB); err != nil {
+		return fmt.Errorf("failed to finalize database: %v", err)
 	}
 
 	fmt.Printf("\nImport complete: %d entries (%d unique words)\n", count, len(uniqueWords))
